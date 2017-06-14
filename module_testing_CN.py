@@ -23,7 +23,13 @@ class CmdTestModule(mp_module.MPModule):
 	super(CmdlongModule, self).__init__(mpstate, "cmdlong")
 	"""Commads for CmdTestmodule"""
 
-
+	def armCopters(self, args):
+		if( args == 1 )
+			# arm 1 copter
+		elif( args == 2 )
+			# arm 2 copters
+		elif( args == 3 )
+			# arm 3 copters
 
 def init(mpstate):
 	"""initialize module"""
