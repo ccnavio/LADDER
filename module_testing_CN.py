@@ -31,7 +31,7 @@ class CmdTestModule(mp_module.MPModule):
 		
 		while( True ):
 			# Stop once all signals have been received
-			if( self.copter1 && self.copter2 && self.copter3 ):
+			if( self.copter1 and self.copter2 and self.copter3 ):
 				break
 			
 			# Copter 1's signal is 100, Copter 2's signal is 200, and Copter 3's signal is 300
