@@ -13,6 +13,8 @@ from MAVProxy.modules.lib.mp_menu import *  # popup menus
 if mp_util.has_wxpython:
 from MAVProxy.modules.lib.mp_menu import *
 
+
+
 def init(mpstate):
     '''initialise module'''
 return TrafficModule(mpstate)
