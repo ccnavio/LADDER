@@ -1,5 +1,6 @@
 """
-    MAVProxy geofence module
+    MAVProxy 
+    Stephen Richards
 """
 import os, time, platform, math
 from pymavlink import mavutil
