@@ -22,13 +22,7 @@ class CmdTestModule(mp_module.MPModule):
 	"""initialize module"""
 	super(CmdlongModule, self).__init__(mpstate, "cmdlong")
 	"""Commads for CmdTestmodule"""
-
-	# Method to arm copter
-	def armCopters(self):
-		if( !Script.armed )
-			MavLink.doARM( True )
-			
-			
+					
 
 def init(mpstate):
 	"""initialize module"""
