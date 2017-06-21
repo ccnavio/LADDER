@@ -86,6 +86,5 @@ print 'Copter Disarmed'
 
 for chan in range(1,9):
 	Script.SendRC(chan,0,False)
-	Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
 # --------------------------------------------- #
 print 'Script Over'
