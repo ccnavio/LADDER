@@ -1,18 +1,6 @@
 # Carie Navio
 # Mission Planner Script
-# Version 1
 # Purpose: Waypoint script testing
-# Master copter
-
-print 'Start Script'
-
-# implement for all channels from 1-9
-for chan in range(1,9):
-    Script.SendRC(chan,1500,False)
-    Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
-
-#wait for 5 seconds
-Script.Sleep(5000)
 
 # 1 roll
 # 2 pitch
@@ -23,41 +11,81 @@ Script.Sleep(5000)
 # 7 autotune (?)
 # 8 empty (?)
 # 9 epm activation 
+def Safety_Check():
+	if cs.ch9in > 1800:
+		for chan in range(1,9):
+			Script.SendRC(chan,0,True)
 
+		# Returns power back to the pilot 
+		Script.Sleep(50)
+		print 'Safety Override'
+		exit()
+	else:
+		return 0
+
+# --------------------------------- MAIN PROGRAM --------------------------------- #
+print 'Starting Script'
+# implement for all channels from 1-9
+for chan in range(1,5):
+    Script.SendRC(chan,1500,False)
+    Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
+
+print 'Initializing 6-9 to False'
+for chan in range (6,9):
+	Script.SendRC(chan,0,False)
+	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
+
+Script.Sleep(2000)
 print 'Copter should start arming'
-MAV.doARM(True) 							# Runs correctly in simulation
+MAV.doARM(True)
 print 'Copter should be armed'
-
-# Can have it wait for a signal to be sent from the RPI GS to the RPI on this 
-# PIXHAWK and THEN it can start taking off
+Script.Sleep(2000)
+# When initialized, the copter is set to Stabilize
 # Throttle PWM values will change for our specific copter
 
-print 'Copter starting throttle'
-Script.SendRC(3, 1700, True)				# Continue to throttle until alt is achieved
-Script.SendRC(3, 1600, True)
+# start from much lower PWM, the SITL only goes up when
+# the PWM is above 1500
+
+# print 'Copter rising'
+
+print 'Starting takeoff'
+Script.SendRC(3,1200,True)
 while cs.alt < 5:
-	print cs.alt							# while altitude is less than (m)?
+	cs.verticalspeed = 0.4					# while altitude is less than (m)?
+	Safety_Check()
 	Script.Sleep(50)
 
-print 'Copter slowing to 10 m'
-Script.SendRC(3, 1550, True)
-while cs.alt < 10:
-	print cs.alt
+print 'Copter slowing to 4 m'
+Script.SendRC(3,1200,True)
+while cs.alt < 4:
+	cs.verticalspeed = 0.25
+	Safety_Check()
 	Script.Sleep(50)
 
+print 'Copter slowing to 5 m'
+while cs.alt < 5:
+	cs.verticalspeed = 0.1
+	Safety_Check()
+	Script.Sleep(50)
+											# it will maintain just under 5 m / 16 ft 
 print 'AltHold copter'
-Script.SendRC(3, 1500, True)				# Slighly holds alt
-Script.SendRC(5, 1400, True)				# This should be AltHold
+Script.SendRC(5,1400,True)					# This should be AltHold
+Safety_Check()
+print 'Sleeping'
 Script.Sleep(5000)
-print 'Finnished AltHold'
 
-print MAV.getWPCount()
+print 'Finished AltHold'
 
-Script.SendRC(3, 1370, True)
-while cs.alt > 0.5:
-	print cs.alt
+Script.SendRC(3,1200,True)
+while cs.alt > 0.2:
+	Safety_Check()
 	Script.Sleep(50)
 
 MAV.doARM(False)
-
 print 'Copter Disarmed'
+
+for chan in range(1,9):
+	Script.SendRC(chan,0,False)
+	Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
+# --------------------------------------------- #
+print 'Script Over'

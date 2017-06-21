@@ -30,14 +30,47 @@ print 'Copter should be armed'
 
 # Can have it wait for a signal to be sent from the RPI GS to the RPI on this 
 # PIXHAWK and THEN it can start taking off
+# Throttle PWM values will change for our specific copter
 
 print 'Copter starting throttle'
-Script.SendRC(3, 1900, False)
-Script.SendRC(3, 1300, True)				# Minimal throttle to enable takeoff
-Script.SendRC(5, 1400, True)				# This should be Stabilize
-
-while cs.alt < 10:							# while altitude is less than 3 (m)?
+Script.SendRC(3, 1500, True)				# Continue to throttle until alt is achieved
+Script.SendRC(3, 1550, True)
+while cs.alt < 2:
+	print cs.alt
+	cs.verticalspeed = 0.5							# while altitude is less than (m)?
 	Script.Sleep(50)
 
-print 'Stabilizing copter'
+print 'Copter slowing to 4 m'
+Script.SendRC(3, 1550, True)
+while cs.alt < 4:
+	print cs.alt
+	cs.verticalspeed = 0.25
+	Script.Sleep(50)
+
+print 'Copter slowing to 5 m'
+while cs.alt < 5:
+	print cs.alt
+	cs.verticalspeed = 0.1
+
+cs.mode = 'AUTO'
+print cs.wp_dist 
+Script.Sleep(2000)
+
+# it will maintain jsut under 6 m / 19 ft 
+
+print 'AltHold copter'
+Script.SendRC(3, 1500, True)				# Slighly holds alt
+Script.SendRC(5, 1400, True)				# This should be AltHold
+Script.Sleep(5000)
+print 'Finnished AltHold'
+
+print MAV.getWPCount()
+
 Script.SendRC(3, 1370, True)
+while cs.alt > 0.2:
+	print cs.alt
+	Script.Sleep(50)
+
+MAV.doARM(False)
+
+print 'Copter Disarmed'
