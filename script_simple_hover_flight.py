@@ -79,10 +79,14 @@ while cs.alt < 5:
 	cs.verticalspeed = 0.1
 	Safety_Check()
 	Script.Sleep(50)
-											# it will maintain just under 5 m / 16 ft 
+
+# it will maintain just under 5 m / 16 ft 
+# Make sure copter is stable before sending into althold
+print 'Sleeping 2s'
+Looping_Safety(2000)
 print 'AltHold copter'
 Script.SendRC(5,1400,True)					# This should be AltHold
-print 'Sleeping'
+print 'Sleeping 5s'
 Looping_Safety(5000)
 
 print 'Finished AltHold'
