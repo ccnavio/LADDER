@@ -84,8 +84,8 @@ while cs.alt < 5:
 # Make sure copter is stable before sending into althold
 print 'Sleeping 2s'
 Looping_Safety(2000)
-print 'AltHold copter'
-Script.SendRC(5,1400,True)					# This should be AltHold
+print 'PosHold copter'
+Script.SendRC(5,1400,True)					# This should be PosHold
 print 'Sleeping 5s'
 Looping_Safety(5000)
 
