@@ -1,6 +1,6 @@
 # Carie Navio
 # Mission Planner Script
-# Purpose: Hover script linked master
+# Purpose: Hover script linked slave
 # THIS IS TESTING ON A QUAD
 
 # 1 roll
@@ -91,9 +91,9 @@ Looping_Safety(3000)
 # Unlinking will last for 2 seconds
 # EPM ON CHANNEL 9
 print 'Wait for unlinking 2s'
-cs.ch9out = 1800
+#cs.ch9out = 1800
 Looping_Safety(2000)
-cs.ch9out = 0
+#cs.ch9out = 0
 
 # This will last 3 seconds
 print 'Maintain position 3s'

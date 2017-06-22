@@ -26,6 +26,16 @@ def Safety_Check():
 	else:
 		return 0
 
+def Looping_Safety(time):
+	loop_var = 0
+	while_var = 0
+	while_var = time/50
+	while loop_var < while_var:
+		Safety_Check()
+		Script.Sleep(50)
+		loop_var = loop_var + 1
+	print 'End Safety Loop'
+
 # --------------------------------- MAIN PROGRAM --------------------------------- #
 print 'Starting Script'
 # implement for all channels from 1-9
@@ -38,11 +48,12 @@ for chan in range (6,9):
 	Script.SendRC(chan,0,False)
 	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
 
-Script.Sleep(2000)
+Looping_Safety(2000)
 print 'Copter should start arming'
 MAV.doARM(True)
-print 'Copter should be armed'
-Script.Sleep(2000)
+
+Looping_Safety(2000)
+print 'Copter should be armed'	
 # When initialized, the copter is set to Stabilize
 # Throttle PWM values will change for our specific copter
 
@@ -50,8 +61,8 @@ Script.Sleep(2000)
 # the PWM is above 1500
 
 print 'Starting takeoff'
-Script.SendRC(3,1200,True)
-while cs.alt < 5:
+Script.SendRC(3,1250,True)
+while cs.alt < 2:
 	cs.verticalspeed = 0.4					# while altitude is less than (m)?
 	Safety_Check()
 	Script.Sleep(50)
@@ -71,13 +82,12 @@ while cs.alt < 5:
 											# it will maintain just under 5 m / 16 ft 
 print 'AltHold copter'
 Script.SendRC(5,1400,True)					# This should be AltHold
-Safety_Check()
 print 'Sleeping'
-Script.Sleep(5000)
+Looping_Safety(5000)
 
 print 'Finished AltHold'
 
-Script.SendRC(3,1200,True)
+Script.SendRC(3,1150,True)
 while cs.alt > 0.2:
 	Safety_Check()
 	Script.Sleep(50)
