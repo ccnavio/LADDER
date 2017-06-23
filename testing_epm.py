@@ -43,27 +43,36 @@ for chan in range(1,5):
     Script.SendRC(chan,1500,False)
     Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
 
-print 'Initializing 6-9 to False'
-for chan in range (6,9):
+print 'Initializing 6-8 to False'
+for chan in range (6,8):
 	Script.SendRC(chan,0,False)
 	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
+
+print 'Initializing 9'
+Script.SendRC(9,1500,False)
+Script.SendRC(9,Script.SendRC('RC9_MIN'), True)
 
 Looping_Safety(2000)
 print 'Copter should start arming'
 MAV.doARM(True)
 
-print 'Maintain position 3s'
-Looping_Safety(3000)
+print 'Maintain position 1s'
+Looping_Safety(1000)
 
-# Unlinking will last for 2 seconds
 # EPM ON CHANNEL 9
 print 'Wait for unlinking 2s'
-cs.ch9out = 1800
-Looping_Safety(2000)
-cs.ch9out = 0
+Script.SendRC(9,Script.GetParam('RC9_MAX'),True)
+print Script.GetParam('RC9_MAX')
 
-# This will last 3 seconds
-print 'Maintain position 3s'
-Looping_Safety(3000)
+Looping_Safety(2000)
+
+Script.SendRC(9,Script.GetParam('RC9_MIN'),True)
+print Script.GetParam('RC9_MIN')
+
+print 'Maintain position 1s'
+Looping_Safety(1000)
+
+for chan in range(1,14):
+	Script.SendRC(chan,0,True)
 
 print 'Done'

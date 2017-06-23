@@ -61,16 +61,16 @@ print 'Copter should be armed'
 # the PWM is above 1500
 
 print 'Starting takeoff'
-Script.SendRC(3,1250,True)
+Script.SendRC(3,1550,True)
 while cs.alt < 2:
-	cs.verticalspeed = 0.4					# while altitude is less than (m)?
+	cs.verticalspeed = 0.30					# while altitude is less than (m)?
 	Safety_Check()
 	Script.Sleep(50)
 
 print 'Copter slowing to 4 m'
-Script.SendRC(3,1200,True)
+Script.SendRC(3,1500,True)
 while cs.alt < 4:
-	cs.verticalspeed = 0.25
+	cs.verticalspeed = 0.20
 	Safety_Check()
 	Script.Sleep(50)
 
@@ -87,12 +87,12 @@ Looping_Safety(2000)
 print 'PosHold copter'
 Script.SendRC(5,1400,True)					# This should be PosHold
 print 'Sleeping 5s'
-Looping_Safety(5000)
+Looping_Safety(2000)
 
 print 'Finished AltHold'
 
-Script.SendRC(3,1150,True)
-while cs.alt > 0.2:
+Script.SendRC(3,1350,True)
+while cs.alt > 0.1:
 	Safety_Check()
 	Script.Sleep(50)
 
