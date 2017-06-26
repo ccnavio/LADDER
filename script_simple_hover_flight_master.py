@@ -62,14 +62,14 @@ print 'Copter should be armed'
 # the PWM is above 1500
 
 print 'Starting takeoff'
-Script.SendRC(3,1250,True)
+Script.SendRC(3,1550,True)
 while cs.alt < 2:
 	cs.verticalspeed = 0.4					# while altitude is less than (m)?
 	Safety_Check()
 	Script.Sleep(50)
 
 print 'Copter slowing to 4 m'
-Script.SendRC(3,1200,True)
+Script.SendRC(3,1500,True)
 while cs.alt < 4:
 	cs.verticalspeed = 0.25
 	Safety_Check()
@@ -101,7 +101,7 @@ Looping_Safety(3000)
 
 print 'Finished AltHold'
 Script.ChangeMode("Stabilize")				# Return to stabilize mode
-Script.SendRC(3,1100,True)
+Script.SendRC(3,1350,True)
 while cs.alt > 0.2:
 	Safety_Check()
 	Script.Sleep(50)

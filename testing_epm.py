@@ -16,7 +16,7 @@
 # safety switch on radio 7
 def Safety_Check():
 	if cs.ch7in > 1800:
-		for chan in range(1,9):
+		for chan in range(1,14):
 			Script.SendRC(chan,0,True)
 
 		# Returns power back to the pilot 
