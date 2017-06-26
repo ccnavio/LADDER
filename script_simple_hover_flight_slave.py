@@ -17,8 +17,6 @@ def Safety_Check():
 	if cs.ch7in > 1800:
 		for chan in range(1,9):
 			Script.SendRC(chan,0,True)
-
-		# Returns power back to the pilot 
 		Script.Sleep(50)
 		print 'Safety Override'
 		exit()
@@ -62,16 +60,16 @@ print 'Copter should be armed'
 # the PWM is above 1500
 
 print 'Starting takeoff'
-Script.SendRC(3,1250,True)
+Script.SendRC(3,1550,True)
 while cs.alt < 2:
-	cs.verticalspeed = 0.4					# while altitude is less than (m)?
+	cs.verticalspeed = 0.30					# while altitude is less than (m)?
 	Safety_Check()
 	Script.Sleep(50)
 
 print 'Copter slowing to 4 m'
-Script.SendRC(3,1200,True)
+Script.SendRC(3,1525,True)
 while cs.alt < 4:
-	cs.verticalspeed = 0.25
+	cs.verticalspeed = 0.20
 	Safety_Check()
 	Script.Sleep(50)
 
@@ -80,20 +78,20 @@ while cs.alt < 5:
 	cs.verticalspeed = 0.1
 	Safety_Check()
 	Script.Sleep(50)
+# ------------------------------------------#
 											# it will maintain just under 5 m / 16 ft 
 print 'AltHold copter'
-Script.SendRC(5,1400,True)					# This should be AltHold
+Script.SendRC(5,1400,True)					# This should be Stabilize
 
 # Make sure we've stopped rising
 print 'Maintain position 3s'
 Looping_Safety(3000)
 
-# Unlinking will last for 2 seconds
 # EPM ON CHANNEL 9
 print 'Wait for unlinking 2s'
-#cs.ch9out = 1800
-Looping_Safety(2000)
-#cs.ch9out = 0
+# Unlink = high
+Looping_Safety(1000)
+# Unlink = low
 
 # This will last 3 seconds
 print 'Maintain position 3s'
@@ -101,7 +99,7 @@ Looping_Safety(3000)
 
 print 'Finished AltHold'
 Script.ChangeMode("Stabilize")				# Return to stabilize mode
-Script.SendRC(3,1100,True)
+Script.SendRC(3,1350,True)
 while cs.alt > 0.2:
 	Safety_Check()
 	Script.Sleep(50)
