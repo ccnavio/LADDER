@@ -79,12 +79,12 @@ def Takeoff(PWM_in, wanted_h):
 	while cs.alt < .25:
 		cs.verticalspeed = 0.3
 		Script.SendRC(3, PWM_in, True)
-		if PWM_in < 1600:
+		if PWM_in < 1650:
 			Looping_Safety(100)
 			PWM_in = PWM_in + 1
 		Safety_Check()
 
-	print 'Climb 2/3 height'
+	print 'Climb 2/3 of wanted height'
 	while cs.alt < wanted_h*2/3.0:
 		cs.verticalspeed = 0.2
 		Script.SendRC(3, PWM_in, True)
