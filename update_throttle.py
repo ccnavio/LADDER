@@ -108,33 +108,28 @@ def Takeoff(PWM_in, wanted_h):
 			print 'inceasing PWM'
 		check = check + 1
 		Safety_Check()
+	Safety_Check()
 
-# Startup defition is the needed startup code that allows us to use
-# the MP python script feature. It sets channels 1-5 into python script 
-# mode while setting all of the other channels still in the controller
-# operated mode. This is important for controlling the flying aspects
-# of the quad (1-5) but also having the safety features we need (failsafe
-# switch on channel 7)
-def Startup():
-	for chan in range(1,5):
-	    Script.SendRC(chan,1500,False)
-	    Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
-
-	print 'Initializing 6-?? to False'
-	for chan in range (6,14):
-		Script.SendRC(chan,0,False)
-		Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
 # --------------------------------- MAIN PROGRAM --------------------------------- #
 print 'Starting Script'
 # implement for all channels from 1-9
 PWM_in = 0
 
-Startup()
+for chan in range(1,5):
+    Script.SendRC(chan,1500,False)
+    Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
+
+print 'Initializing 6-?? to False'
+for chan in range (6,14):
+	Script.SendRC(chan,0,False)
+	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
 
 print 'Copter arming'
 MAV.doARM(True)
 Looping_Safety(2000)
 PWM_in = 1400
+
+Script.SendRC(5,1200,True)					# This should be Loiter
 
 # 3m = about 10ft
 Takeoff(PWM_in, 3)

@@ -3,24 +3,15 @@
 # Purpose: Waypoint script testing
 # THIS DOES NOT INCLUDE THE UNLINKING PORTION
 
-# 1 roll
-# 2 pitch
-# 3 throttle
-# 4 yaw
-# 5 flight modes
-# 6 empty
-# 7 autotune (?)
-# 8 empty (?)
-# 9 epm activation 
+# This will remain pretty much untouched because we know how it works
+# so if we run into issues, this program will help determine if they
+# are code based, or hardware based.
 
-# safety switch on radio 7
 def Safety_Check():
 	if cs.ch7in > 1800:
 		for chan in range(1,9):
 			Script.SendRC(chan,0,True)
-
-		# Returns power back to the pilot 
-		Script.Sleep(50)
+		Script.Sleep(25)
 		print 'Safety Override'
 		exit()
 	else:
@@ -89,7 +80,8 @@ Looping_Safety(2000)
 
 print 'Finished AltHold'
 
-Script.SendRC(3,1350,True)
+# Fix this shit
+Script.SendRC(3,1400,True)
 while cs.alt > 0.1:
 	Safety_Check()
 	Script.Sleep(50)
@@ -98,6 +90,6 @@ MAV.doARM(False)
 print 'Copter Disarmed'
 
 for chan in range(1,9):
-	Script.SendRC(chan,0,False)
+	Script.SendRC(chan,0,True)
 # --------------------------------------------- #
 print 'Script Over'

@@ -1,6 +1,6 @@
 # Carie Navio
 # Mission Planner Script
-# Purpose: Hover script linked master
+# Purpose: Testing epm with safety check but no throttle
 # THIS IS TESTING ON A QUAD
 
 import clr
@@ -23,7 +23,7 @@ def Safety_Check():
 	if cs.ch7in > 1800:
 		for chan in range(1,9):
 			Script.SendRC(chan,0,True)
-		Script.Sleep(50)
+		Script.Sleep(25)
 		print 'Safety Override'
 		exit()
 	else:
@@ -67,6 +67,19 @@ print 'Copter disconnect EPM'
 MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, Script.GetParam('RC9_MIN'), 0, 0, 0, 0, 0) # Stops button
 Looping_Safety(1000)
 MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0) # returns to neut
+
+# This will last 3 seconds
+print 'Maintain position 3s'
+Looping_Safety(3000)
+
+MAV.doARM(False)
+print 'Copter Disarmed'
+
+for chan in range(1,9):
+	Script.SendRC(chan,0,True)
+
+print 'Script Over'
+
 # ------------------------------------
 # Script.ChangeParam('RC9_FUNCTION', 0) #disables user control to allow auto
 
@@ -82,16 +95,3 @@ MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0) # returns to
 
 # Script.ChangeParam('RC9_FUNCTION', 1) #should return user control
 # ------------------------------------
-
-
-# This will last 3 seconds
-print 'Maintain position 3s'
-Looping_Safety(3000)
-
-MAV.doARM(False)
-print 'Copter Disarmed'
-
-for chan in range(1,9):
-	Script.SendRC(chan,0,False)
-
-print 'Script Over'
