@@ -116,6 +116,8 @@ while cs.alt > 0.2:
 MAV.doARM(False)
 print 'Copter Disarmed'
 
+log_file.close()
+
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)
 
