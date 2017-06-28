@@ -2,21 +2,8 @@
 # Mission Planner Script
 # Purpose: Hover script linked slave
 # THIS IS TESTING ON A QUAD
-
-# 1 roll
-# 2 pitch
-# 3 throttle
-# 4 yaw
-# 5 flight modes
-# 6 empty
-# 7 autotune (?)
-# 8 empty (?)
-# 9 epm activation 
-import os
-
-log_file = open( 'flight_data_log.txt', 'w' )
-
-print os.path.dirname(log_file.name)
+# Used for Quad 2
+# Need to start in Loiter
 
 def Safety_Check():
 	if cs.ch7in > 1800:
@@ -66,25 +53,20 @@ print 'Copter should be armed'
 
 print 'Starting takeoff'
 Script.SendRC(3,1550,True)
-log_file.write('PWM: 1550\n')
-while cs.alt < 2:
-	log_file.write('Alt = %s\n' % cs.alt)
+while cs.alt < 1:
 	cs.verticalspeed = 0.30					# while altitude is less than (m)?
 	Safety_Check()
 	Script.Sleep(50)
 
 print 'Copter slowing to 4 m'
 Script.SendRC(3,1525,True)
-log_file.write('PWM: 1525\n')
-while cs.alt < 4:
-	log_file.write('Alt = %s\n' % cs.alt)
-	cs.verticalspeed = 0.20
+while cs.alt < 2:
+	cs.verticalspeed = 0.1
 	Safety_Check()
 	Script.Sleep(50)
 
 print 'Copter slowing to 5 m'
-while cs.alt < 5:
-	log_file.write('Alt = %s\n' % cs.alt)
+while cs.alt < 3:
 	cs.verticalspeed = 0.1
 	Safety_Check()
 	Script.Sleep(50)
@@ -110,16 +92,12 @@ Looping_Safety(3000)
 print 'Finished AltHold'
 Script.ChangeMode("Stabilize")				# Return to stabilize mode
 Script.SendRC(3,1350,True)
-log_file.write('PWM: 1350\n')
 while cs.alt > 0.2:
-	log_file.write('Alt = %s\n' % cs.alt )
 	Safety_Check()
 	Script.Sleep(50)
 
 MAV.doARM(False)
 print 'Copter Disarmed'
-
-log_file.close()
 
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)

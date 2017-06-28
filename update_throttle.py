@@ -3,16 +3,6 @@
 # Purpose: Waypoint script testing
 # THIS DOES NOT INCLUDE THE UNLINKING PORTION
 
-# 1 roll
-# 2 pitch
-# 3 throttle
-# 4 yaw
-# 5 flight modes
-# 6 empty
-# 7 Safety_check
-# 8 empty 
-# 9 epm activation 
-
 # Safety_Check definition takes no inputs. It reads channel 7,
 # which is initially set to low, and waits for a high signal from
 # the controller. This will send all channels an input value of 0
@@ -49,12 +39,13 @@ def Landing(PWM_in):
 	while cs.alt > 0.1:
 		Script.SendRC(3, PWM_in, True)
 		cs.verticalspeed = -0.2
-		while PWM_in > 1350:
+		while PWM_in > 1400:
 			if cs.verticalspeed < -0.25:
 				PWM_in = PWM_in + 1
 			elif cs.verticalspeed >= -0.2:
 				Looping_Safety(100)
 				PWM_in = PWM_in - 1 
+			Safety_Check()	
 		Safety_Check()
 
 # The Takeoff defition takes two values: PWM_in and wanted_h.
@@ -79,7 +70,7 @@ def Takeoff(PWM_in, wanted_h):
 	while cs.alt < .25:
 		cs.verticalspeed = 0.3
 		Script.SendRC(3, PWM_in, True)
-		if PWM_in < 1650:
+		if PWM_in < 1700:
 			Looping_Safety(100)
 			PWM_in = PWM_in + 1
 		Safety_Check()
@@ -119,7 +110,7 @@ for chan in range(1,5):
     Script.SendRC(chan,1500,False)
     Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
 
-print 'Initializing 6-?? to False'
+print 'Initializing 6-14 to False'
 for chan in range (6,14):
 	Script.SendRC(chan,0,False)
 	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
@@ -127,12 +118,10 @@ for chan in range (6,14):
 print 'Copter arming'
 MAV.doARM(True)
 Looping_Safety(2000)
-PWM_in = 1400
-
-Script.SendRC(5,1200,True)					# This should be Loiter
+PWM_in = 1500
 
 # 3m = about 10ft
-Takeoff(PWM_in, 3)
+Takeoff(PWM_in, 2)
 
 Script.SendRC(5,1400,True)
 print 'PosHold copter'
