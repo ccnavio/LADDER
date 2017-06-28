@@ -2,8 +2,22 @@
 # Mission Planner Script
 # Purpose: Hover script linked slave
 # THIS IS TESTING ON A QUAD
+<<<<<<< HEAD
 # Used for Quad 2
 # Need to start in Loiter
+=======
+
+# 1 roll
+# 2 pitch
+# 3 throttle
+# 4 yaw
+# 5 flight modes
+# 6 empty
+# 7 autotune (?)
+# 8 empty (?)
+# 9 epm activation 
+log_file = open( 'flight_data_log.txt', 'w' )
+>>>>>>> 326a7afa1adabd5c664d6184fe42a449991a4f7e
 
 def Safety_Check():
 	if cs.ch7in > 1800:
