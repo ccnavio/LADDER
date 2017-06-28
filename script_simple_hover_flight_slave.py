@@ -12,8 +12,11 @@
 # 7 autotune (?)
 # 8 empty (?)
 # 9 epm activation 
+import os
 
-log_file = open( 'flight_data_log', 'w' )
+log_file = open( 'flight_data_log.txt', 'w' )
+
+print os.path.dirname(log_file.name)
 
 def Safety_Check():
 	if cs.ch7in > 1800:
