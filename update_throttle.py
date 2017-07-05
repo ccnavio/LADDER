@@ -1,6 +1,6 @@
 # Carie Navio
 # Mission Planner Script
-# Purpose: Waypoint script testing
+# Purpose: Autonomous throttle update
 # THIS DOES NOT INCLUDE THE UNLINKING PORTION
 
 # Safety_Check definition takes no inputs. It reads channel 7,
@@ -35,14 +35,14 @@ def Looping_Safety(time):
 
 # NOTE: Can change this alt depending where 0 is
 # This needs a little more modification possibly.
-def Landing(PWM_in):
-	while cs.alt > 0.1:
+def Landing(PWM_in, Start_alt):
+	while cs.alt - Start_alt > 0.1:
 		Script.SendRC(3, PWM_in, True)
 		cs.verticalspeed = -0.2
 		while PWM_in > 1400:
 			if cs.verticalspeed < -0.25:
 				PWM_in = PWM_in + 1
-			elif cs.verticalspeed >= -0.2:
+			elif cs.verticalspeed >= -0.15:
 				Looping_Safety(100)
 				PWM_in = PWM_in - 1 
 			Safety_Check()	
@@ -65,46 +65,58 @@ def Landing(PWM_in):
 # be an issue and has been mitigated through the use of the check which will 
 # slowly increase the PWM_in value when it reads that we have not yet met the
 # height we wanted. 
-def Takeoff(PWM_in, wanted_h):
+
+# In this version of the code, the startup altitude does not have to be 0. It 
+# will call from what that height is and basically set that height to zero, so 
+# if the copters are not at the same altitude, they should still fly approximately 
+# the same height from their given cs.alt. 
+def Takeoff(PWM_in, wanted_h, Start_alt):
 	print 'Taking off'
-	while cs.alt < .25:
-		cs.verticalspeed = 0.3
+	while cs.alt - Start_alt < .25:
 		Script.SendRC(3, PWM_in, True)
-		if PWM_in < 1700:
+		if cs.verticalspeed < 0.2:
 			Looping_Safety(100)
 			PWM_in = PWM_in + 1
 		Safety_Check()
 
 	print 'Climb 2/3 of wanted height'
-	while cs.alt < wanted_h*2/3.0:
+	while cs.alt - Start_alt < wanted_h*2/3.0:
 		cs.verticalspeed = 0.2
 		Script.SendRC(3, PWM_in, True)
 		if cs.verticalspeed > wanted_h*2/30.0 + 0.1:
 			PWM_in = PWM_in - 1
-			print 'decreasing PWM'
+			print '1. Decreasing PWM'
 		Safety_Check()
 
 	print 'Slowing down'
-	check = 0
-	cs.verticalspeed = 0.1
-	while cs.alt < wanted_h:
+	check_slowdown = check_speedup = 0
+	cs.verticalspeed = 0.15
+	while cs.alt - Start_alt < wanted_h:
 		Script.SendRC(3, PWM_in, True)
-		if cs.verticalspeed > 0.2:
-			Looping_Safety(100)
-			PWM_in = PWM_in - 1
-			print 'decreasing PWM'
-		elif check == 150:		 
-			check = 0					
-			PWM_in = PWM_in + 10
-			print 'inceasing PWM'
-		check = check + 1
+		if cs.verticalspeed > 0.25:
+			check_slowdown = check_slowdown + 1
+			if check_slowdown == 10:
+				PWM_in = PWM_in - 1
+				check_slowdown = 0
+			print check_slowdown
+			print '2. Decreasing PWM'
+		elif cs.verticalspeed < 0.1 and cs.alt-Start_alt < wanted_h-0.5:		 
+			check_speedup = check_speedup + 1
+			if check_speedup == 150:					
+				PWM_in = PWM_in + 10
+				print '2. Inceasing PWM'
+				check_speedup = 0
+			print check_speedup
 		Safety_Check()
 	Safety_Check()
 
 # --------------------------------- MAIN PROGRAM --------------------------------- #
 print 'Starting Script'
-# implement for all channels from 1-9
-PWM_in = 0
+
+PWM_in = Start_alt = 0
+
+Start_alt = cs.alt
+print Start_alt
 
 for chan in range(1,5):
     Script.SendRC(chan,1500,False)
@@ -121,7 +133,7 @@ Looping_Safety(2000)
 PWM_in = 1500
 
 # 3m = about 10ft
-Takeoff(PWM_in, 2)
+Takeoff(PWM_in, 2, Start_alt)
 
 Script.SendRC(5,1400,True)
 print 'PosHold copter'
@@ -130,7 +142,7 @@ Looping_Safety(5000)
 
 print 'Starting to Land'
 print PWM_in
-Landing(PWM_in)
+Landing(PWM_in, Start_alt)
 
 print 'Copter disarmed'
 MAV.doARM(False)

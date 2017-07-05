@@ -55,48 +55,49 @@ print 'Copter should be armed'
 # Throttle PWM values will change for our specific copter
 
 print 'Starting takeoff'
-Script.SendRC(3,1650,True)
-while cs.alt < 1:
-	cs.verticalspeed = 0.30					# while altitude is less than (m)?
+Script.SendRC(3,1675,True)					# 1680 - 1700/1715
+while cs.sonarrange < 0.50:
+	print cs.sonarrange
+	cs.verticalspeed = 0.1					# while altitude is less than (m)?
 	Safety_Check()
-	Script.Sleep(50)
+	#Script.Sleep(50)
 
-print 'Copter slowing to 4 m'
-Script.SendRC(3,1600,True)
-while cs.alt < 2:
-	cs.verticalspeed = 0.1
-	Safety_Check()
-	Script.Sleep(50)
+# print 'Copter slowing to 4 m'
+# while cs.sonarrange < 1.5:
+# 	print cs.sonarrange
+# 	cs.verticalspeed = 0.1
+# 	Safety_Check()
+	#Script.Sleep(50)
 
-print 'Copter slowing to 5 m'
-while cs.alt < 3:
-	cs.verticalspeed = 0.1
-	Safety_Check()
-	Script.Sleep(50)
+# print 'Copter slowing to 5 m'
+# while cs.alt < 3:
+# 	cs.verticalspeed = 0.1
+# 	Safety_Check()
+# 	Script.Sleep(50)
 # ------------------------------------------#
 											# it will maintain just under 5 m / 16 ft 
 print 'AltHold copter'
-Script.SendRC(5,1500,True)					# This should be AltHold
+Script.SendRC(5,1400,True)					# This should be AltHold
 
 # Make sure we've stopped rising
 print 'Maintain position 3s'
-Looping_Safety(3000)
+Looping_Safety(1000)
 
 # EPM ON CHANNEL 9
 print 'Copter disconnect EPM'
 # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, Script.GetParam('RC9_MAX'), 0, 0, 0, 0, 0) # Starts button
 MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, Script.GetParam('RC9_MIN'), 0, 0, 0, 0, 0) # Stops button
-Looping_Safety(1000)
+Looping_Safety(500)
 MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0) # returns to neut
 
 # This will last 3 seconds
-print 'Maintain position 3s'
-Looping_Safety(3000)
+# print 'Maintain position 3s'
+# Looping_Safety(1000)
 
 print 'Finished AltHold'
 Script.ChangeMode("Stabilize")				# Return to stabilize mode
-Script.SendRC(3,1575,True)
-while cs.alt > 0.05:
+Script.SendRC(3,1675,True)					# 1575		
+while cs.sonarrange > 0.05:
 	Safety_Check()
 	Script.Sleep(50)
 
