@@ -3,6 +3,8 @@
 # Purpose: Autonomous throttle update
 # THIS DOES NOT INCLUDE THE UNLINKING PORTION
 
+import time
+
 # Safety_Check definition takes no inputs. It reads channel 7,
 # which is initially set to low, and waits for a high signal from
 # the controller. This will send all channels an input value of 0
@@ -16,6 +18,8 @@ def Safety_Check():
 			Script.SendRC(chan,0,True)
 		Script.Sleep(25)
 		print 'Safety Override'
+		f.write("Safety Override")
+		f.close()
 		exit()
 	else:
 		return 0
@@ -45,7 +49,8 @@ def Landing(PWM_in, Start_alt):
 			elif cs.verticalspeed >= -0.15:
 				Looping_Safety(100)
 				PWM_in = PWM_in - 1 
-			Safety_Check()	
+			Safety_Check()
+			f.write("%d\n" % PWM_in)			##	
 		Safety_Check()
 
 # The Takeoff defition takes two values: PWM_in and wanted_h.
@@ -72,14 +77,17 @@ def Landing(PWM_in, Start_alt):
 # the same height from their given cs.alt. 
 def Takeoff(PWM_in, wanted_h, Start_alt):
 	print 'Taking off'
+	f.write("Taking off\n")						##
 	while cs.alt - Start_alt < .25:
 		Script.SendRC(3, PWM_in, True)
 		if cs.verticalspeed < 0.2:
 			Looping_Safety(100)
 			PWM_in = PWM_in + 1
 		Safety_Check()
+		f.write("%d\n" % PWM_in)				##
 
 	print 'Climb 2/3 of wanted height'
+	f.write("Climb 2/3 of wanted height\n")		##
 	while cs.alt - Start_alt < wanted_h*2/3.0:
 		cs.verticalspeed = 0.2
 		Script.SendRC(3, PWM_in, True)
@@ -87,8 +95,10 @@ def Takeoff(PWM_in, wanted_h, Start_alt):
 			PWM_in = PWM_in - 1
 			print '1. Decreasing PWM'
 		Safety_Check()
+		f.write("%d\n" % PWM_in)				##
 
 	print 'Slowing down'
+	f.write("Slowing down\n")					##
 	check_slowdown = check_speedup = 0
 	cs.verticalspeed = 0.15
 	while cs.alt - Start_alt < wanted_h:
@@ -108,15 +118,24 @@ def Takeoff(PWM_in, wanted_h, Start_alt):
 				check_speedup = 0
 			print check_speedup
 		Safety_Check()
+		f.write("%d\n" % PWM_in)				##
 	Safety_Check()
 
 # --------------------------------- MAIN PROGRAM --------------------------------- #
-print 'Starting Script'
+save_path = "c:/Users/cnavio/Desktop/Logs/update_throttle/"
+file_name = time.strftime("%m-%d-%Y_%H-%M-%S")
+complete_path = save_path+file_name+".txt"
+print complete_path
+f = open(complete_path, "w")
+
+print 'Starting Script update_throttle'
+f.write("Starting Script update_throttle\n")	##
 
 PWM_in = Start_alt = 0
 
 Start_alt = cs.alt
 print Start_alt
+f.write("Start_alt %d\n" % Start_alt)			##
 
 for chan in range(1,5):
     Script.SendRC(chan,1500,False)
@@ -128,6 +147,7 @@ for chan in range (6,14):
 	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
 
 print 'Copter arming'
+f.write("Copter arming\n")						##
 MAV.doARM(True)
 Looping_Safety(2000)
 PWM_in = 1500
@@ -137,17 +157,22 @@ Takeoff(PWM_in, 2, Start_alt)
 
 Script.SendRC(5,1400,True)
 print 'PosHold copter'
+f.write("PosHolding\n")							##
 print PWM_in
+f.write("%d\n" % PWM_in)						##
 Looping_Safety(5000)
 
 print 'Starting to Land'
+f.write("Starting to Land\n")
 print PWM_in
 Landing(PWM_in, Start_alt)
 
 print 'Copter disarmed'
+f.write("Copter disarmed\n")					##
 MAV.doARM(False)
 
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)
 
 print 'Done'
+f.close()										##
