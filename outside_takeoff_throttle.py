@@ -24,14 +24,37 @@ def Looping_Safety(time):
 		loop_var = loop_var + 1
 	print 'End Safety Loop'
 
+# Is the leftside quad at a negative angle? 
+# Take in a PWM value for throttle. You slowly increase throttle 
+# until the angle of roll is about 2(?) degress off of your starting
+# angle. At this point you should be in hover and then you wait for 
+# a small alt change. 
+def Takeoff(PWM_in, init_roll)
+	while cs.roll < init_roll + 3:
+		Safety_Check()
+		PWM_in = PWM_in + 1
+		if cs.roll > init_roll + 2:
+			count_roll = count_roll + 1
+			if count_roll == 10:
+				return PWM_in
+
+def Control_Yaw(PWM_in, init_yaw)
+	max_angle = 50					# in deg, change for future
+	while cs.ch8in < 1800:			# Setup channel 8 for controller
+		if abs(cs.yaw) > max_angle:
+
+
+
+
 # --------------------------------- MAIN PROGRAM --------------------------------- #
 # NOTE!!!!!!!!!!!!!!!!!
 # Can't use stabilize, consider using alt_hold or loiter
 # Takeoff parameters
-init_roll = roll_count = 0
+init_roll = init_yaw = roll_count = PWM_in = max_angle = 0
 print "Initial roll: %d" % cs.roll
 print "PWM_in: %d" % PWM_in
 init_roll = cs.roll
+init_yaw = cs.yaw
 
 print 'Starting Script'
 # implement for all channels from 1-9
@@ -44,16 +67,16 @@ for chan in range (6,9):
 	Script.SendRC(chan,0,False)
 	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
 
+PWM_in = Script.GetParam('RC3_MIN') # This is probably too low to set as starting value
+
 Looping_Safety(2000)
 print 'Copter should start arming'
 MAV.doARM(True)
 
-Looping_Safety(2000) b bnm, 
+Looping_Safety(2000)
 print 'Copter should be armed'				
 
-
-# NOT WRITTEN YET
-
+PWM_in = Takeoff(PWM_in, init_roll)
 
 
 
@@ -66,7 +89,6 @@ print 'Copter should be armed'
 # If it's in stabilize, the roll and pitch will level
 # out on their own. 
 
-PWM_in = Rolling_Check(PWM_in, init_roll)
 
 # The degree of roll initially is very dependent on the pixhawk itself.
 # The degree of roll should be taken into consideration pre-flight and

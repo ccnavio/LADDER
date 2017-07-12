@@ -50,7 +50,7 @@ def Rolling_Check(PWM_in, init_roll)
 		return PWM_in
 
 # Take in a PWM value for throttle. You slowly increase throttle 
-# until the angle of roll is about 2?? degress off of your starting
+# until the angle of roll is about 2(?) degress off of your starting
 # angle. At this point you should be in hover and then you wait for 
 # a small alt change. 
 def Takeoff(PWM_in, init_roll)

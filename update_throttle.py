@@ -40,18 +40,19 @@ def Looping_Safety(time):
 # NOTE: Can change this alt depending where 0 is
 # This needs a little more modification possibly.
 def Landing(PWM_in, Start_alt):
+	PWM_in = PWM_in - 25
 	while cs.alt - Start_alt > 0.1:
+		# while PWM_in > 1400:
 		Script.SendRC(3, PWM_in, True)
 		cs.verticalspeed = -0.2
-		while PWM_in > 1400:
-			if cs.verticalspeed < -0.25:
-				PWM_in = PWM_in + 1
-			elif cs.verticalspeed >= -0.15:
-				Looping_Safety(100)
-				PWM_in = PWM_in - 1 
-			Safety_Check()
-			f.write("%d\n" % PWM_in)			##	
+		if cs.verticalspeed < -0.25:
+			PWM_in = PWM_in + 1
+		else:
+			Looping_Safety(100)
+			PWM_in = PWM_in - 1
 		Safety_Check()
+		f.write("%d\n" % PWM_in)			##	
+	# Safety_Check()
 
 # The Takeoff defition takes two values: PWM_in and wanted_h.
 # PWM_in is predefined in the setup, currently set to 1400 but
@@ -164,7 +165,9 @@ Looping_Safety(5000)
 
 print 'Starting to Land'
 f.write("Starting to Land\n")
-print PWM_in
+
+# Script.SendRC(5, 1800, True)
+
 Landing(PWM_in, Start_alt)
 
 print 'Copter disarmed'
