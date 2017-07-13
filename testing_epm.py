@@ -72,11 +72,17 @@ MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0) # returns to
 print 'Maintain position 3s'
 Looping_Safety(3000)
 
-MAV.doARM(False)
-print 'Copter Disarmed'
+Script.ChangeParam("LAND_SPEED", 30)
+Script.ChangeMode("Land")
+print 'Landing'
+while cs.alt > Start_alt:
+	Safety_Check()
 
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)
+
+MAV.doARM(False)
+print 'Copter Disarmed'
 
 print 'Script Over'
 

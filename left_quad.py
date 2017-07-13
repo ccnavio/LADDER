@@ -101,10 +101,16 @@ PWM_in = Rolling_Check(PWM_in, init_roll)
 # degree changes accordingly. As of now, the angle of degree change will
 # be set to 5 before wanting to fix the displacement.
 
-MAV.doARM(False)
-print 'Copter Disarmed'
+Script.ChangeParam("LAND_SPEED", 30)
+Script.ChangeMode("Land")
+print 'Landing'
+while cs.alt > Start_alt:
+	Safety_Check()
 
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)
+
+MAV.doARM(False)
+print 'Copter Disarmed'
 
 print 'Script Over'

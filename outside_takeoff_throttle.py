@@ -92,13 +92,6 @@ MAV.doARM(True)
 Looping_Safety(2000)
 print 'Copter should be armed'				
 
-
-
-
-
-
-
-
 # Takeoff parameters of left_quad would include this:
 # If it's in stabilize, the roll and pitch will level
 # out on their own. 
@@ -110,10 +103,16 @@ print 'Copter should be armed'
 # degree changes accordingly. As of now, the angle of degree change will
 # be set to 5 before wanting to fix the displacement.
 
-MAV.doARM(False)
-print 'Copter Disarmed'
+Script.ChangeParam("LAND_SPEED", 30)
+Script.ChangeMode("Land")
+print 'Landing'
+while cs.alt > Start_alt:
+	Safety_Check()
 
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)
+
+MAV.doARM(False)
+print 'Copter Disarmed'
 
 print 'Script Over'

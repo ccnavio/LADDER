@@ -82,4 +82,7 @@ while cs.alt > Start_alt:
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)
 
+MAV.doARM(False)
+print 'Copter Disarmed'
+
 print 'Script Over'

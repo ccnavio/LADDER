@@ -22,19 +22,6 @@ def Looping_Safety(time):
 		Script.Sleep(50)
 		loop_var = loop_var + 1
 
-def Landing(PWM_in, Start_alt):
-	while cs.sonarrange - Start_alt > 0.1:
-		Script.SendRC(3, PWM_in, True)
-		cs.verticalspeed = -0.2
-		while PWM_in > 1400:
-			if cs.verticalspeed < -0.25:
-				PWM_in = PWM_in + 1
-			elif cs.verticalspeed >= -0.2:
-				Looping_Safety(100)
-				PWM_in = PWM_in - 1 
-			Safety_Check()	
-		Safety_Check()
-
 def Takeoff(PWM_in, wanted_h, Start_alt):
 	print 'Taking off'
 	while cs.sonarrange - Start_alt < .25:
@@ -105,14 +92,16 @@ print 'PosHold copter'
 print PWM_in
 Looping_Safety(5000)
 
-print 'Starting to Land'
-print PWM_in
-Landing(PWM_in, Start_alt)
-
-print 'Copter disarmed'
-MAV.doARM(False)
+Script.ChangeParam("LAND_SPEED", 30)
+Script.ChangeMode("Land")
+print 'Landing'
+while cs.alt > Start_alt:
+	Safety_Check()
 
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)
 
-print 'Done'
+print 'Copter disarmed'
+MAV.doARM(False)
+
+print 'Script Over'
