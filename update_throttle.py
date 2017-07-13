@@ -52,7 +52,14 @@ def Landing(PWM_in, Start_alt):
 			PWM_in = PWM_in - 1
 		Safety_Check()
 		f.write("%d\n" % PWM_in)			##	
-	# Safety_Check()
+
+def Landing_Auto(Start_alt):
+	Script.ChangeParam("LAND_SPEED", 30)
+	Script.ChangeMode("Land")
+	print 'Landing'
+	while cs.alt > Start_alt:
+		Safety_Check()
+
 
 # The Takeoff defition takes two values: PWM_in and wanted_h.
 # PWM_in is predefined in the setup, currently set to 1400 but
@@ -138,6 +145,7 @@ Start_alt = cs.alt
 print Start_alt
 f.write("Start_alt %d\n" % Start_alt)			##
 
+Script.ChangeMode("Stabilize")
 for chan in range(1,5):
     Script.SendRC(chan,1500,False)
     Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
@@ -168,7 +176,9 @@ f.write("Starting to Land\n")
 
 # Script.SendRC(5, 1800, True)
 
-Landing(PWM_in, Start_alt)
+# Landing(PWM_in, Start_alt)
+
+Landing_Auto(Start_alt)
 
 print 'Copter disarmed'
 f.write("Copter disarmed\n")					##

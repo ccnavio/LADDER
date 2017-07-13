@@ -65,7 +65,7 @@ print 'Wait for unlinking 2s'
 print 'Copter disconnect EPM'
 # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, Script.GetParam('RC9_MAX'), 0, 0, 0, 0, 0) # Starts button
 MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, Script.GetParam('RC9_MIN'), 0, 0, 0, 0, 0) # Stops button
-Looping_Safety(1000)
+Looping_Safety(2000)
 MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0) # returns to neut
 
 # This will last 3 seconds

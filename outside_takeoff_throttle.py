@@ -2,6 +2,8 @@
 # Mission Planner Script
 # Purpose: LEFT SIDE QUAD, Q1
 
+import math
+
 def Safety_Check():
 	if cs.ch7in > 1800:
 		for chan in range(1,9):
@@ -38,11 +40,24 @@ def Takeoff(PWM_in, init_roll)
 			if count_roll == 10:
 				return PWM_in
 
+# how big of a range do we want?
 def Control_Yaw(PWM_in, init_yaw)
-	max_angle = 50					# in deg, change for future
+				 					# in deg, change for future
 	while cs.ch8in < 1800:			# Setup channel 8 for controller
-		if abs(cs.yaw) > max_angle:
-
+		#delta_yaw = cs.yaw - init_yaw
+		delta_yaw = (180/math.pi)*asin(sin((cs.yaw - init_yaw)*(math.pi/180)))
+		# fix this for 0 - 359
+		if delta_yaw < -5:
+			yaw_neg = yaw_neg + 1
+			if yaw_neg == 10:
+				# pitch = channel 2
+				yaw_neg = 0
+		elif delta_yaw > 5:
+			yaw_pos = yaw_pos + 1
+			if yaw_pos == 10:
+				# pitch = channel 2
+				yaw_pos = 0
+		Safety_Check()
 
 
 
@@ -50,7 +65,8 @@ def Control_Yaw(PWM_in, init_yaw)
 # NOTE!!!!!!!!!!!!!!!!!
 # Can't use stabilize, consider using alt_hold or loiter
 # Takeoff parameters
-init_roll = init_yaw = roll_count = PWM_in = max_angle = 0
+init_roll = roll_count = PWM_in = max_angle = 0
+init_yaw = delta_yaw = 0
 print "Initial roll: %d" % cs.roll
 print "PWM_in: %d" % PWM_in
 init_roll = cs.roll
@@ -67,7 +83,7 @@ for chan in range (6,9):
 	Script.SendRC(chan,0,False)
 	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
 
-PWM_in = Script.GetParam('RC3_MIN') # This is probably too low to set as starting value
+PWM_in = 1550 # Jonathan's copter. Find throttle value
 
 Looping_Safety(2000)
 print 'Copter should start arming'
@@ -75,8 +91,6 @@ MAV.doARM(True)
 
 Looping_Safety(2000)
 print 'Copter should be armed'				
-
-PWM_in = Takeoff(PWM_in, init_roll)
 
 
 
