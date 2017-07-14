@@ -94,7 +94,7 @@ for chan in range (6,9):
 	Script.SendRC(chan,0,False)
 	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
 
-PWM_in = 1550 # Jonathan's copter. Find throttle value
+PWM_in = 1460 # Jonathan's copter. Find throttle value
 
 Looping_Safety(2000)
 print 'Copter should start arming'
@@ -106,8 +106,9 @@ print 'Copter should be armed'
 # Takeoff parameters of left_quad would include this:
 # If it's in stabilize, the roll and pitch will level
 # out on their own. 
+
 Script.SendRC(3, PWM_in, True)
-Control_Yaw(init_yaw)
+Control_Roll(PWM_in)
 print 'Exit Control_Yaw'
 
 # The degree of roll initially is very dependent on the pixhawk itself.
