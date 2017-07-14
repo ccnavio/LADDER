@@ -16,8 +16,6 @@ def Safety_Check():
 			Script.SendRC(chan,0,True)
 		Script.Sleep(25)
 		print 'Safety Override'
-		f.write("Safety Override")
-		f.close()
 		exit()
 	else:
 		return 0
@@ -52,7 +50,7 @@ rel_alt = 0
 Script.ChangeParam("THR_DZ", 100)
 
 #Max speed the pilot may request, in cm/s from 50 to 500.
-Script.ChangeParam("PILOT_VELZ_MAX", 50)
+Script.ChangeParam("PILOT_VELZ_MAX", 30)
 
 # TAKEOFF
 print('Taking off')
@@ -67,8 +65,8 @@ while rel_alt < 2:
 
 # Will this run if the values vary?
 Script.SendRC(3,1550,True)
-print('Hold altitude for 6 sec')
-Looping_Safety(6000)
+print('Hold altitude for 3 sec')
+Looping_Safety(3000)
 # LANDING
 # LAND_SPEED = descending speed in cm/s from 30 - 200.
 # If descending from above 10m modify the WPNAV_SPEED_DN parameter
