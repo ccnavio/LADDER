@@ -52,9 +52,9 @@ def Control_Yaw(init_yaw)
 			print "Yaw_Control Aborted: Exceeded Max Angle"
 			Safety_Check()
 		}
-		# yaw correction  
+		# yaw correction function and updates pitch of Q1 
 		elif abs(delta_yaw) > 5: 
-			yaw_pwm = (-0.2*delta_yaw)^3 + 1500
+			yaw_pwm = -1 * (-0.2 * delta_yaw)**3 + 1500
 			Script.SendRC( 2, yaw_pwm, True)
 		Safety_Check()
 
