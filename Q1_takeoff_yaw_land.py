@@ -6,6 +6,7 @@ import math
 
 def Safety_Check():
 	if cs.ch7in > 1800:
+		Script.ChangeMode("Stabilize")
 		for chan in range(1,9):
 			Script.SendRC(chan,0,True)
 		Script.Sleep(25)
@@ -26,63 +27,32 @@ def Looping_Safety(time):
 		loop_var = loop_var + 1
 	print 'End Safety Loop'
 
-# Is the leftside quad at a negative angle? 
-# Take in a PWM value for throttle. You slowly increase throttle 
-# until the angle of roll is about 2(?) degress off of your starting
-# angle. At this point you should be in hover and then you wait for 
-# a small alt change. 
-def Takeoff(PWM_in, init_roll)
-	while cs.roll < init_roll + 3:
-		Safety_Check()
-		PWM_in = PWM_in + 1
-		if cs.roll > init_roll + 2:
-			count_roll = count_roll + 1
-			if count_roll == 10:
-				return PWM_in
-
-# how big of a range do we want?
-def Control_Yaw(init_yaw)
-				 					# in deg, change for future
-	while cs.ch8in < 1800:			# Setup channel 8 for controller
-		delta_yaw = (180/math.pi)*asin(sin((cs.yaw - init_yaw)*(math.pi/180))) 
+def Control_Yaw(init_yaw, pitch_pwm):
+	delta_time = 0.1
+	print 'In Control Yaw'
+	while cs.ch7in < 1800:	
+		error = cs.yaw - init_yaw		
 		# Sets max angle the quad will try to correct for, if reached it aborts to user control
-		if abs(delta_yaw) > 45:
+		if abs(error) > 45+init_yaw:
 			cs.ch7in = 1900
 			print "Control_Yaw Aborted: Exceeded Max Angle"
 			Safety_Check()
+
 		# yaw correction function and updates pitch of Q1 
-		elif abs(delta_yaw) > 5: 
-			yaw_pwm = -1 * (-0.2 * delta_yaw)**3 + 1500
-			Script.SendRC( 2, yaw_pwm, True)
+		elif abs(error) > 3+init_yaw: 
+			accum_error += error * delta_time
+			der_error = (error - last_error)/delta_time
+			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
+			last_error = error
+
+			pitch_pwm = pitch_pwm + output*100
+			Script.SendRC( 2, pitch_pwm, True)
+			print pitch_pwm
 		Safety_Check()
-
-def Control_Roll(PWM_in)
-
-	while cs.ch8in < 1800:
-		# Sets max angle the quad will try to correct for, if reached it aborts to user control
-		if abs(cs.roll) > 15:
-			cs.ch7in = 1900
-			print "Control_Roll Aborted: Exceeded Max Angle"
-			Safety_Check()
-		# roll correction function and updates throttle of Q3
-		elif abs(cs.roll) < 2:
-			roll_pwm = -1 * (-0.2 * cs.roll)**3 + PWM_in
-			Script.SendRC(3, roll_pwm, True)
-		Safety_Check()
-
 
 # --------------------------------- MAIN PROGRAM --------------------------------- #
-# NOTE!!!!!!!!!!!!!!!!!
-# Can't use stabilize, consider using alt_hold or loiter
 # Takeoff parameters
-init_roll = roll_count = PWM_in = max_angle = 0
-init_yaw = delta_yaw = 0
-print "Initial roll: %d" % cs.roll
-print "PWM_in: %d" % PWM_in
-init_roll = cs.roll
-init_yaw = cs.yaw
-yaw_pwm = 1500
-
+Script.ChangeMode("Stabilize")
 print 'Starting Script'
 # implement for all channels from 1-9
 for chan in range(1,5):
@@ -94,7 +64,11 @@ for chan in range (6,9):
 	Script.SendRC(chan,0,False)
 	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
 
-PWM_in = 1550 # Jonathan's copter. Find throttle value
+Start_alt = cs.alt
+init_yaw = cs.yaw
+pitch_pwm = cs.ch2in # pitch
+last_error = 0
+PWM_in = 1580 # Jonathan's copter. Find throttle value
 
 Looping_Safety(2000)
 print 'Copter should start arming'
@@ -106,8 +80,9 @@ print 'Copter should be armed'
 # Takeoff parameters of left_quad would include this:
 # If it's in stabilize, the roll and pitch will level
 # out on their own. 
+
 Script.SendRC(3, PWM_in, True)
-Control_Yaw(init_yaw)
+Control_Yaw(init_yaw, pitch_pwm)
 print 'Exit Control_Yaw'
 
 # The degree of roll initially is very dependent on the pixhawk itself.
