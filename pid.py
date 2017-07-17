@@ -1,4 +1,5 @@
 # PID 
+import time
 
 # Point you want to be at
 setpoint = 0
