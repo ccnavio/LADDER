@@ -4,7 +4,7 @@
 setpoint = 0
 
 # Error in the system
-error = 0
+error
 
 # Time differential ( Set to 10 Hz )
 dt = 0.1
