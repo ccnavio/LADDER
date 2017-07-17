@@ -27,4 +27,4 @@ while error > 0.5
 		continue
 	# SendRC(1:4, minimumThrust+abs(output), True) 
 	previous_error = error					# Reset previous error for derivative term next loop
-
+	time.sleep(dt)
