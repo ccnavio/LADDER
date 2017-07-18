@@ -1,8 +1,8 @@
-# Carie Navio
 # Mission Planner Script
 # Purpose: LEFT SIDE QUAD, Q1
 
 import math
+import time
 
 def Safety_Check():
 	if cs.ch7in > 1800:
@@ -11,6 +11,7 @@ def Safety_Check():
 			Script.SendRC(chan,0,True)
 		Script.Sleep(25)
 		print 'Safety Override'
+		f.close()
 		exit()
 	else:
 		return 0
@@ -29,29 +30,56 @@ def Looping_Safety(time):
 
 def Control_Yaw(init_yaw, pitch_pwm):
 	delta_time = 0.1
+	accum_error = 0
+	last_error = 0
+	Kp = 0.135
+	Ki = 0.09
+	Kd = 0.0036
+	count = 0
 	print 'In Control Yaw'
-	while cs.ch7in < 1800:	
-		error = cs.yaw - init_yaw		
-		# Sets max angle the quad will try to correct for, if reached it aborts to user control
-		if abs(error) > 45+init_yaw:
-			cs.ch7in = 1900
-			print "Control_Yaw Aborted: Exceeded Max Angle"
-			Safety_Check()
+	f.write("In Control Yaw\n")
+	f.write("Init: %d\n" % init_yaw)
 
-		# yaw correction function and updates pitch of Q1 
-		elif abs(error) > 3+init_yaw: 
+	while cs.ch8in < 1800:	
+		print 'While loop'
+		# f.write("Input: %d " % cs.yaw)
+		error = cs.yaw - init_yaw	
+		f.write("%d " % error)
+		# Sets max angle the quad will try to correct for, if reached it aborts to user control
+		# if abs(error) > 45:
+		# 	cs.ch7in = 1900
+		# 	print "Control_Yaw Aborted: Exceeded Max Angle"
+		# 	f.write("Aborted")
+
+		# # yaw correction function and updates pitch of Q1 
+		if abs(error) > 2: 
 			accum_error += error * delta_time
 			der_error = (error - last_error)/delta_time
 			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
 			last_error = error
 
-			pitch_pwm = pitch_pwm + output*100
-			Script.SendRC( 2, pitch_pwm, True)
-			print pitch_pwm
+			# f.write("Output: %d\n" % output)
+			pitch_pwm += -output*0.5 
+
+			if pitch_pwm > Script.GetParam('RC3_MAX'):
+				pitch_pwm = Script.GetParam('RC3_MAX')
+			elif pitch_pwm < Script.GetParam('RC3_MIN'):
+				pitch_pwm = Script.GetParam('RC3_MIN')
+
+		Script.SendRC( 2, pitch_pwm, True)
+		f.write("%d \n" % pitch_pwm)		
+		Script.Sleep(100)
 		Safety_Check()
 
-# --------------------------------- MAIN PROGRAM --------------------------------- #
+
+# ---------------------------- MAIN PROGRAM ---------------------------- #
 # Takeoff parameters
+save_path = "c:/Users/cnavio/Desktop/Logs/T1_testing/"
+file_name = time.strftime("%m-%d-%Y_%H-%M-%S")
+complete_path = save_path+file_name+".txt"
+
+f = open(complete_path, "w")
+
 Script.ChangeMode("Stabilize")
 print 'Starting Script'
 # implement for all channels from 1-9
@@ -67,7 +95,6 @@ for chan in range (6,9):
 Start_alt = cs.alt
 init_yaw = cs.yaw
 pitch_pwm = cs.ch2in # pitch
-last_error = 0
 PWM_in = 1580 # Jonathan's copter. Find throttle value
 
 Looping_Safety(2000)
@@ -80,7 +107,7 @@ print 'Copter should be armed'
 # Takeoff parameters of left_quad would include this:
 # If it's in stabilize, the roll and pitch will level
 # out on their own. 
-
+print init_yaw
 Script.SendRC(3, PWM_in, True)
 Control_Yaw(init_yaw, pitch_pwm)
 print 'Exit Control_Yaw'
@@ -91,16 +118,10 @@ print 'Exit Control_Yaw'
 # degree changes accordingly. As of now, the angle of degree change will
 # be set to 5 before wanting to fix the displacement.
 
-Script.ChangeParam("LAND_SPEED", 30)
-Script.ChangeMode("Land")
-print 'Landing'
-while cs.alt > Start_alt:
-	Safety_Check()
-
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)
 
 MAV.doARM(False)
 print 'Copter Disarmed'
-
+f.close()
 print 'Script Over'
