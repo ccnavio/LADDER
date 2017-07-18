@@ -5,7 +5,7 @@ import time
 setpoint = 0
 
 # Error in the system
-error
+error = 0
 
 # Time differential ( Set to 10 Hz )
 dt = 0.1
