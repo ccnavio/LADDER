@@ -3,6 +3,7 @@
 # Purpose: LEFT SIDE QUAD, Q1
 
 import math
+import time
 
 def Safety_Check():
 	if cs.ch7in > 1800:
@@ -31,7 +32,7 @@ def Looping_Safety(time):
 # until the angle of roll is about 2(?) degress off of your starting
 # angle. At this point you should be in hover and then you wait for 
 # a small alt change. 
-def Takeoff(PWM_in, init_roll)
+def Takeoff(PWM_in, init_roll):
 	while cs.roll < init_roll + 3:
 		Safety_Check()
 		PWM_in = PWM_in + 1
@@ -40,49 +41,60 @@ def Takeoff(PWM_in, init_roll)
 			if count_roll == 10:
 				return PWM_in
 
-# how big of a range do we want?
-def Control_Yaw(init_yaw)
-				 					# in deg, change for future
-	while cs.ch8in < 1800:			# Setup channel 8 for controller
-		delta_yaw = (180/math.pi)*asin(sin((cs.yaw - init_yaw)*(math.pi/180))) 
-		# Sets max angle the quad will try to correct for, if reached it aborts to user control
-		if abs(delta_yaw) > 45:
-			cs.ch7in = 1900
-			print "Control_Yaw Aborted: Exceeded Max Angle"
-			Safety_Check()
-		# yaw correction function and updates pitch of Q1 
-		elif abs(delta_yaw) > 5: 
-			yaw_pwm = -1 * (-0.2 * delta_yaw)**3 + 1500
-			Script.SendRC( 2, yaw_pwm, True)
-		Safety_Check()
+def Control_Roll(init_roll, roll_pwm):
+	delta_time = 0.1
+	accum_error = 0
+	last_error = 0
+	Kp = 0.135
+	Ki = 0.09
+	Kd = 0.0036
+	count = 0
+	print 'In Control Roll'
+	f.write("In Control Roll\n")
+	f.write("Init: %d\n" % init_yaw)
 
-def Control_Roll(PWM_in)
-
-	while cs.ch8in < 1800:
+	while count < 200:	
+		print 'While loop'
+		# f.write("Input: %d " % cs.yaw)
+		error = cs.roll - init_roll	
+		f.write("%d " % error)
 		# Sets max angle the quad will try to correct for, if reached it aborts to user control
-		if abs(cs.roll) > 15:
-			cs.ch7in = 1900
-			print "Control_Roll Aborted: Exceeded Max Angle"
-			Safety_Check()
-		# roll correction function and updates throttle of Q3
-		elif abs(cs.roll) < 2:
-			roll_pwm = -1 * (-0.2 * cs.roll)**3 + PWM_in
-			Script.SendRC(3, roll_pwm, True)
+		# if abs(error) > 45:
+		# 	cs.ch7in = 1900
+		# 	print "Control_Yaw Aborted: Exceeded Max Angle"
+		# 	f.write("Aborted")
+
+		# # yaw correction function and updates pitch of Q1 
+		if abs(error) > 2: 
+			accum_error += error * delta_time
+			der_error = (error - last_error)/delta_time
+			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
+			last_error = error
+
+			# f.write("Output: %d\n" % output)
+			roll_pwm += -output*0.5 
+
+			if roll_pwm > Script.GetParam('RC3_MAX'):
+				roll_pwm = Script.GetParam('RC3_MAX')
+			elif roll_pwm < Script.GetParam('RC3_MIN'):
+				roll_pwm = Script.GetParam('RC3_MIN')
+
+		count += 1
+		Script.SendRC( 3, roll_pwm, True)
+		f.write("%d \n" % roll_pwm)		
+		Script.Sleep(100)
 		Safety_Check()
 
 
 # --------------------------------- MAIN PROGRAM --------------------------------- #
-# NOTE!!!!!!!!!!!!!!!!!
-# Can't use stabilize, consider using alt_hold or loiter
 # Takeoff parameters
-init_roll = roll_count = PWM_in = max_angle = 0
-init_yaw = delta_yaw = 0
-print "Initial roll: %d" % cs.roll
-print "PWM_in: %d" % PWM_in
-init_roll = cs.roll
-init_yaw = cs.yaw
-yaw_pwm = 1500
+save_path = "c:/Users/cnavio/Desktop/Logs/T3_testing/"
+file_name = time.strftime("%m-%d-%Y_%H-%M-%S")
+complete_path = save_path+file_name+".txt"
 
+f = open(complete_path, "w")
+
+Script.ChangeMode("Stabilize")
 print 'Starting Script'
 # implement for all channels from 1-9
 for chan in range(1,5):
@@ -94,7 +106,10 @@ for chan in range (6,9):
 	Script.SendRC(chan,0,False)
 	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
 
-PWM_in = 1460 # Jonathan's copter. Find throttle value
+Start_alt = cs.alt
+init_roll = cs.roll
+init_yaw = cs.yaw
+PWM_in = 1460 # Jake's copter. Find throttle value
 
 Looping_Safety(2000)
 print 'Copter should start arming'
@@ -108,7 +123,7 @@ print 'Copter should be armed'
 # out on their own. 
 
 Script.SendRC(3, PWM_in, True)
-Control_Roll(PWM_in)
+Control_Roll(init_roll, PWM_in)
 print 'Exit Control_Yaw'
 
 # The degree of roll initially is very dependent on the pixhawk itself.
@@ -129,4 +144,5 @@ for chan in range(1,9):
 MAV.doARM(False)
 print 'Copter Disarmed'
 
+f.close()
 print 'Script Over'

@@ -61,10 +61,10 @@ def Control_Yaw(init_yaw, pitch_pwm):
 			# f.write("Output: %d\n" % output)
 			pitch_pwm += -output*0.5 
 
-			if pitch_pwm > Script.GetParam('RC3_MAX'):
-				pitch_pwm = Script.GetParam('RC3_MAX')
-			elif pitch_pwm < Script.GetParam('RC3_MIN'):
-				pitch_pwm = Script.GetParam('RC3_MIN')
+			if pitch_pwm > Script.GetParam('RC2_MAX'):
+				pitch_pwm = Script.GetParam('RC2_MAX')
+			elif pitch_pwm < Script.GetParam('RC2_MIN'):
+				pitch_pwm = Script.GetParam('RC2_MIN')
 
 		Script.SendRC( 2, pitch_pwm, True)
 		f.write("%d \n" % pitch_pwm)		
