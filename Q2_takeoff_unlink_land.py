@@ -7,12 +7,13 @@ clr.AddReference("MissionPlanner")
 import MissionPlanner
 clr.AddReference("MAVLink")
 import MAVLink
+import math
 
 # Safety_Check definition takes no inputs. It reads channel 7,
 # which is initially set to low, and waits for a high signal from
 # the controller. This will send all channels an input value of 0
 # which will relinquish control from the script. The exit() doesn't 
-# actually exit. It will create an error from the mission planner side
+# actually exit. It will create an serror from the mission planner side
 # but this doesn't do anthing as far the code goes. This can be changed
 # but it would mostly be cosmetic.
 def Safety_Check():
@@ -64,9 +65,6 @@ print 'Copter arming'
 MAV.doARM(True)
 Looping_Safety(2000)
 
-Start_alt = cs.alt
-rel_alt = 0
-
 # Switch deadband (THR_DZ) to 10%
 # A value of 100 means deadband is 10% above and below 50% 
 # throttle (40%-60% throttle will trigger alt hold)
@@ -75,35 +73,64 @@ Script.ChangeParam("THR_DZ", 100)
 #Max speed the pilot may request, in cm/s from 50 to 500.
 Script.ChangeParam("PILOT_VELZ_MAX", 30)
 
+Start_alt = cs.alt
+rel_alt = 0
+
 # TAKEOFF
 print('Taking off')
 Script.ChangeMode("AltHold")
+# Looping_Safety(10000)
 while rel_alt < 1.5:
-	Script.SendRC(3,1900,True)
+	Script.SendRC(3,1650,True)
 	rel_alt =  cs.alt - Start_alt
 	Safety_Check()
 
 # HOVER
 # Hold altitude by throttling to deadband
-Script.SendRC(3,1550,True)
+Script.SendRC(3,1500,True)
 print('Unlinking')
 
-Looping_Safety(2000)
-# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, Script.GetParam('RC9_MAX'), 0, 0, 0, 0, 0) # Starts button
-MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, Script.GetParam('RC9_MIN'), 0, 0, 0, 0, 0) # Stops button
-MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, Script.GetParam('RC10_MIN'), 0, 0, 0, 0, 0) # Stops button
-Looping_Safety(2000)
-MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0) # returns to neut
-MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 1500, 0, 0, 0, 0, 0) # returns to neut
-Looping_Safety(1000)
+# Looping_Safety(2000)
+# # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, Script.GetParam('RC9_MAX'), 0, 0, 0, 0, 0) # Starts button
+# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, Script.GetParam('RC9_MIN'), 0, 0, 0, 0, 0) # Stops button
+# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, Script.GetParam('RC10_MIN'), 0, 0, 0, 0, 0) # Stops button
+# Looping_Safety(2000)
+# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0) # returns to neut
+# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 1500, 0, 0, 0, 0, 0) # returns to neut
+# Looping_Safety(1000)
+
+# #Turning 60 degrees CLOCKWISE to disengage quads
+# print 'Turning'
+# init_yaw = cs.yaw 
+# delta_yaw = 0
+# while delta_yaw < 30:
+# 	delta_yaw = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
+# 	print delta_yaw
+# 	Script.SendRC(4, 1550,True)
+# while delta_yaw < 60:
+# 	delta_yaw = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
+# 	print delta_yaw
+# 	Script.SendRC(4, 1525,True)
+# Script.SendRC(4,1500,True)
+# Looping_Safety(3000)
+
+
+# #Rise and hover for 5 seconds
+# print('Rising to hover')
+# while rel_alt < 2.5:
+# 	Script.SendRC(3,1700,True)
+# 	rel_alt =  cs.alt - Start_alt
+# 	Safety_Check()
+# Script.SendRC(3,1500,True)
+# Looping_Safety(5000)
 
 # LANDING
 # LAND_SPEED = descending speed in cm/s from 30 - 200.
 # If descending from above 10m modify the WPNAV_SPEED_DN parameter
-
+Looping_Safety(5000)
 Script.ChangeParam("LAND_SPEED", 30)
-Script.ChangeMode("Land")
 print 'Landing'
+Script.ChangeMode("Land")
 while cs.alt > Start_alt:
 	Safety_Check()
 
@@ -116,4 +143,3 @@ Script.ChangeParam("RC10_FUNCTION", 1)
 MAV.doARM(False)
 print 'Copter Disarmed'
 print 'Script Over'
-
