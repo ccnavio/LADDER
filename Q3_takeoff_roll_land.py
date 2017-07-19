@@ -1,4 +1,3 @@
-# Carie Navio
 # Mission Planner Script
 # Purpose: LEFT SIDE QUAD, Q1
 
@@ -7,6 +6,7 @@ import time
 
 def Safety_Check():
 	if cs.ch7in > 1800:
+		Script.ChangeMode("Stabilize")
 		for chan in range(1,9):
 			Script.SendRC(chan,0,True)
 		Script.Sleep(25)
@@ -41,29 +41,28 @@ def Takeoff(PWM_in, init_roll):
 			if count_roll == 10:
 				return PWM_in
 
-def Control_Roll(init_roll, roll_pwm):
+def Control_Roll(init_roll, roll_pwm, Start_alt):
 	delta_time = 0.1
 	accum_error = 0
 	last_error = 0
 	Kp = 0.135
 	Ki = 0.09
 	Kd = 0.0036
-	count = 0
+	check = 0
 	print 'In Control Roll'
-	f.write("In Control Roll\n")
-	f.write("Init: %d\n" % init_yaw)
 
-	while count < 200:	
+	# Change to 1.6?
+	while cs.alt - Start_alt < 1.6:	
+
+		if cs.alt - Start_alt > 1.3:
+			check += 1
+			if check == 15:
+				return 0
+				print 'Exiting check alt'
+
 		print 'While loop'
-		# f.write("Input: %d " % cs.yaw)
 		error = cs.roll - init_roll	
-		f.write("%d " % error)
-		# Sets max angle the quad will try to correct for, if reached it aborts to user control
-		# if abs(error) > 45:
-		# 	cs.ch7in = 1900
-		# 	print "Control_Yaw Aborted: Exceeded Max Angle"
-		# 	f.write("Aborted")
-
+		Safety_Check()
 		# # yaw correction function and updates pitch of Q1 
 		if abs(error) > 2: 
 			accum_error += error * delta_time
@@ -75,28 +74,19 @@ def Control_Roll(init_roll, roll_pwm):
 			roll_pwm += -output*0.5 
 
 			if roll_pwm > Script.GetParam('RC3_MAX'):
-				roll_pwm = Script.GetParam('RC3_MAX')
+				roll_pwm = Script.GetParam('RC3_MAX') - 100
 			elif roll_pwm < Script.GetParam('RC3_MIN'):
-				roll_pwm = Script.GetParam('RC3_MIN')
+				roll_pwm = Script.GetParam('RC3_MIN') + 10
 
-		count += 1
+		print roll_pwm
 		Script.SendRC( 3, roll_pwm, True)
-		f.write("%d \n" % roll_pwm)		
-		Script.Sleep(100)
 		Safety_Check()
-
 
 # --------------------------------- MAIN PROGRAM --------------------------------- #
 # Takeoff parameters
-save_path = "c:/Users/cnavio/Desktop/Logs/T3_testing/"
-file_name = time.strftime("%m-%d-%Y_%H-%M-%S")
-complete_path = save_path+file_name+".txt"
-
-f = open(complete_path, "w")
-
 Script.ChangeMode("Stabilize")
 print 'Starting Script'
-# implement for all channels from 1-9
+# implement for all channels from 1-9s
 for chan in range(1,5):
     Script.SendRC(chan,1500,False)
     Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
@@ -118,31 +108,39 @@ MAV.doARM(True)
 Looping_Safety(2000)
 print 'Copter should be armed'				
 
-# Takeoff parameters of left_quad would include this:
+# Takeoff parameters of Q3 would include this:
 # If it's in stabilize, the roll and pitch will level
 # out on their own. 
-
-Script.SendRC(3, PWM_in, True)
-Control_Roll(init_roll, PWM_in)
-print 'Exit Control_Yaw'
 
 # The degree of roll initially is very dependent on the pixhawk itself.
 # The degree of roll should be taken into consideration pre-flight and
 # monitor the movement of the pixhawk. As the pixhawk moves, the roll
 # degree changes accordingly. As of now, the angle of degree change will
 # be set to 5 before wanting to fix the displacement.
+print init_roll
+Script.SendRC(3, PWM_in, True)
+Control_Roll(init_roll, PWM_in, Start_alt)
+print 'Exit Control_Roll'
 
-Script.ChangeParam("LAND_SPEED", 30)
-Script.ChangeMode("Land")
-print 'Landing'
-while cs.alt > Start_alt:
+# Script.SendRC(3, PWM_in, True)
+Script.ChangeMode("AltHold")
+Looping_Safety(4000)
+
+# Landing sequence
+# Script.ChangeParam("LAND_SPEED", 30)
+# Script.ChangeMode("Land")
+# print 'Landing'
+# while cs.alt > Start_alt:
+# 	Safety_Check()
+
+while cs.landed == False:
+	Script.SendRC(3, PWM_in, True)
 	Safety_Check()
 
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)
 
+print 'Copter Disarming'
 MAV.doARM(False)
-print 'Copter Disarmed'
 
-f.close()
 print 'Script Over'

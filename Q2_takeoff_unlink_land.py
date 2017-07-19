@@ -77,17 +77,20 @@ rel_alt = 0
 
 # TAKEOFF
 print('Taking off')
-Script.ChangeMode("ALTHOLD")
+Script.ChangeMode("AltHold")
 Looping_Safety(3000)
 while rel_alt < 1.5:
 	Script.SendRC(3,1650,True)
 	rel_alt =  cs.alt - Start_alt
 	Safety_Check()
 
+#-----------------------------------------------------------------------------------
 # HOVER
 # Hold altitude by throttling to deadband
-Script.SendRC(3,1500,True)
-print('Unlinking')
+Script.SendRC(3,1200,True)
+print 'Hovering'
+
+# print('Unlinking')
 
 # Looping_Safety(2000)
 # # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, Script.GetParam('RC9_MAX'), 0, 0, 0, 0, 0) # Starts button
@@ -99,32 +102,32 @@ print('Unlinking')
 # Looping_Safety(1000)
 
 #Turning 60 degrees CLOCKWISE to disengage quads
-print 'Turning'
-init_yaw = cs.yaw 
-delta_yaw = 0
-while delta_yaw < 30:
-	delta_yaw = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
-	print delta_yaw
-	Script.SendRC(4, 1550,True)
-	Safety_Check()
-while delta_yaw < 60:
-	delta_yaw = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
-	print delta_yaw
-	Script.SendRC(4, 1525,True)
-	Safety_Check()
-Safety_Check()
-Script.SendRC(4,1500,True)
-Looping_Safety(3000)
+# print 'Turning'
+# init_yaw = cs.yaw 
+# delta_yaw = 0
+# while delta_yaw < 30:
+# 	delta_yaw = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
+# 	print delta_yaw
+# 	Script.SendRC(4, 1550,True)
+# 	Safety_Check()
+# while delta_yaw < 60:
+# 	delta_yaw = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
+# 	print delta_yaw
+# 	Script.SendRC(4, 1525,True)
+# 	Safety_Check()
+# Safety_Check()
+# Script.SendRC(4,1500,True)
+# Looping_Safety(3000)
 
-#Rise and hover for 5 seconds
-print('Rising to hover')
-while rel_alt < 2.5:
-	Script.SendRC(3,1700,True)
-	rel_alt =  cs.alt - Start_alt
-	Safety_Check()
-Script.SendRC(3,1500,True)
+# #Rise and hover for 5 seconds
+# print('Rising to hover')
+# while rel_alt < 2.5:
+# 	Script.SendRC(3,1650,True)
+# 	rel_alt =  cs.alt - Start_alt
+# 	Safety_Check()
+# Script.SendRC(3,1500,True)
+#-----------------------------------------------------------------------------------
 Looping_Safety(5000)
-
 # LANDING
 # LAND_SPEED = descending speed in cm/s from 30 - 200.
 # If descending from above 10m modify the WPNAV_SPEED_DN parameter
