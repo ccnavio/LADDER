@@ -26,6 +26,6 @@ while error > 0.5
 	output = Kp*error + Ki*integral + Kd*derivative		# Response of the system
 	if minimumThrust+abs(output) > 1700		# Is 1700 too much?
 		continue
-	# SendRC(1:4, minimumThrust+abs(output), True) 
+	# SendRC(1:4, minimumThrust+output, True) 
 	previous_error = error					# Reset previous error for derivative term next loop
 	time.sleep(dt)
