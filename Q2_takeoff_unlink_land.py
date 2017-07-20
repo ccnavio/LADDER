@@ -8,6 +8,7 @@ import MissionPlanner
 clr.AddReference("MAVLink")
 import MAVLink
 import math
+import time
 
 # Safety_Check definition takes no inputs. It reads channel 7,
 # which is initially set to low, and waits for a high signal from
@@ -18,12 +19,12 @@ import math
 # but it would mostly be cosmetic.
 def Safety_Check():
 	if cs.ch7in > 1800:
+		for chan in range(1,9):
+			Script.SendRC(chan,0,True)
+			Script.SendRC(3, Script.GetParam('RC3_MIN'), True)
 		Script.ChangeMode("Stabilize")
 		Script.ChangeParam("RC9_FUNCTION", 1)
 		Script.ChangeParam("RC10_FUNCTION", 1)
-		for chan in range(1,9):
-			Script.SendRC(chan,0,True)
-		Script.Sleep(25)
 		print 'Safety Override'
 		exit()
 	else:
@@ -35,16 +36,16 @@ def Safety_Check():
 # even if the script is not doing anything. 
 def Looping_Safety(time):
 	loop_var = 0
-	while_var = 0
-	while_var = time/50
-	while loop_var < while_var:
+	while loop_var < time/25:
 		Safety_Check()
-		Script.Sleep(50)
 		loop_var = loop_var + 1
+		Script.Sleep(25)
 
 #--------------------------------------------------------------------------------------------
 print 'Starting Script'
 # implement for all channels from 1-9
+start_time = int(round(time.time()*1000))
+
 for chan in range(1,5):
     Script.SendRC(chan,1500,False)
     Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
@@ -54,6 +55,7 @@ for chan in range (6,9):
 	Script.SendRC(chan,0,False)
 	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
 
+pre_scriptchange = int(round(time.time()*1000)) - start_time
 Script.ChangeParam("RC9_FUNCTION", 0)
 Script.ChangeParam("RC10_FUNCTION", 0)
 
@@ -62,6 +64,7 @@ Script.ChangeMode("Stabilize")
 print 'Copter arming'
 #Copter wont arm again if left in althold from previous run
 MAV.doARM(True)
+print 'Copter armed'
 Looping_Safety(2000)
 
 # Switch deadband (THR_DZ) to 10%
@@ -70,7 +73,7 @@ Looping_Safety(2000)
 Script.ChangeParam("THR_DZ", 100)
 
 #Max speed the pilot may request, in cm/s from 50 to 500.
-Script.ChangeParam("PILOT_VELZ_MAX", 30)
+Script.ChangeParam("PILOT_VELZ_MAX", 50)
 
 Start_alt = cs.alt
 rel_alt = 0
@@ -78,16 +81,15 @@ rel_alt = 0
 # TAKEOFF
 print('Taking off')
 Script.ChangeMode("AltHold")
-Looping_Safety(3000)
-while rel_alt < 1.5:
-	Script.SendRC(3,1650,True)
-	rel_alt =  cs.alt - Start_alt
+Looping_Safety(2000)
+while cs.alt - Start_alt < 1.5:
 	Safety_Check()
+	Script.SendRC(3,1700,True)
 
 #-----------------------------------------------------------------------------------
 # HOVER
 # Hold altitude by throttling to deadband
-Script.SendRC(3,1200,True)
+Script.SendRC(3,1500,True)
 print 'Hovering'
 
 # print('Unlinking')

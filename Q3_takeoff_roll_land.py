@@ -6,10 +6,9 @@ import time
 
 def Safety_Check():
 	if cs.ch7in > 1800:
-		Script.ChangeMode("Stabilize")
 		for chan in range(1,9):
 			Script.SendRC(chan,0,True)
-		Script.Sleep(25)
+		Script.ChangeMode("Stabilize")
 		print 'Safety Override'
 		exit()
 	else:
@@ -19,27 +18,16 @@ def Safety_Check():
 # safety loop to continue checking time in ms
 def Looping_Safety(time):
 	loop_var = 0
-	while_var = 0
-	while_var = time/50
-	while loop_var < while_var:
+	while loop_var < time/25:
 		Safety_Check()
-		Script.Sleep(50)
 		loop_var = loop_var + 1
-	print 'End Safety Loop'
+		Script.Sleep(25)
 
 # Is the leftside quad at a negative angle? 
 # Take in a PWM value for throttle. You slowly increase throttle 
 # until the angle of roll is about 2(?) degress off of your starting
 # angle. At this point you should be in hover and then you wait for 
 # a small alt change. 
-def Takeoff(PWM_in, init_roll):
-	while cs.roll < init_roll + 3:
-		Safety_Check()
-		PWM_in = PWM_in + 1
-		if cs.roll > init_roll + 2:
-			count_roll = count_roll + 1
-			if count_roll == 10:
-				return PWM_in
 
 def Control_Roll(init_roll, roll_pwm, Start_alt):
 	delta_time = 0.1
@@ -52,7 +40,7 @@ def Control_Roll(init_roll, roll_pwm, Start_alt):
 	print 'In Control Roll'
 
 	# Change to 1.6?
-	while cs.alt - Start_alt < 1.6:	
+	while cs.alt - Start_alt < 1.5:	
 
 		if cs.alt - Start_alt > 1.3:
 			check += 1
@@ -63,14 +51,13 @@ def Control_Roll(init_roll, roll_pwm, Start_alt):
 		print 'While loop'
 		error = cs.roll - init_roll	
 		Safety_Check()
-		# # yaw correction function and updates pitch of Q1 
+		# PID
 		if abs(error) > 2: 
 			accum_error += error * delta_time
 			der_error = (error - last_error)/delta_time
 			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
 			last_error = error
 
-			# f.write("Output: %d\n" % output)
 			roll_pwm += -output*0.5 
 
 			if roll_pwm > Script.GetParam('RC3_MAX'):
@@ -133,8 +120,9 @@ Looping_Safety(4000)
 # while cs.alt > Start_alt:
 # 	Safety_Check()
 
-while cs.landed == False:
-	Script.SendRC(3, PWM_in, True)
+Script.SendRC(3, PWM_in, True)
+
+while cs.alt > Start_alt:
 	Safety_Check()
 
 for chan in range(1,9):

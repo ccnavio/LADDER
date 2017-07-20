@@ -6,10 +6,9 @@ import time
 
 def Safety_Check():
 	if cs.ch7in > 1800:
-		Script.ChangeMode("Stabilize")
 		for chan in range(1,9):
 			Script.SendRC(chan,0,True)
-		Script.Sleep(25)
+		Script.ChangeMode("Stabilize")
 		print 'Safety Override'
 		exit()
 	else:
@@ -19,13 +18,10 @@ def Safety_Check():
 # safety loop to continue checking time in ms
 def Looping_Safety(time):
 	loop_var = 0
-	while_var = 0
-	while_var = time/50
-	while loop_var < while_var:
+	while loop_var < time/25:
 		Safety_Check()
-		Script.Sleep(50)
 		loop_var = loop_var + 1
-	print 'End Safety Loop'
+		Script.Sleep(25)
 
 def Control_Yaw(init_yaw, pitch_pwm, Start_alt):
 	delta_time = 0.1
@@ -107,8 +103,9 @@ Script.ChangeMode("AltHold")
 Looping_Safety(4000)
 
 # Landing sequence
-while cs.landed == False:
-	Script.SendRC(3, PWM_in, True)
+Script.SendRC(3, PWM_in, True)
+
+while cs.alt > Start_alt:
 	Safety_Check()
 
 # Script.ChangeParam("LAND_SPEED", 30)
