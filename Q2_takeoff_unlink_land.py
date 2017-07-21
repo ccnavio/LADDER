@@ -83,8 +83,8 @@ print('Taking off')
 Script.ChangeMode("AltHold")
 Looping_Safety(2000)
 while cs.alt - Start_alt < 1.5:
-	Safety_Check()
 	Script.SendRC(3,1700,True)
+	Safety_Check()
 
 #-----------------------------------------------------------------------------------
 # HOVER

@@ -30,16 +30,21 @@ def Control_Yaw(init_yaw, pitch_pwm, Start_alt):
 	Kp = 0.135
 	Ki = 0.09
 	Kd = 0.0036
-	count = 0
+	init_pitch_pwm = pitch_pwm
 	print 'In Control Yaw'
 
 	while cs.alt - Start_alt < 1.3:	
-		print 'While loop'
 		error = cs.yaw - init_yaw	
+		print "Error: %d" % error
 
 		Safety_Check()
 		# # yaw correction function and updates pitch of Q1 
-		if abs(error) > 2: 
+
+		if abs(error) >= 45:
+			cs.ch7in = 1900
+			Safety_Check()	
+
+		elif abs(error) > 2: 
 			accum_error += error * delta_time
 			der_error = (error - last_error)/delta_time
 			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
@@ -48,7 +53,7 @@ def Control_Yaw(init_yaw, pitch_pwm, Start_alt):
 			pitch_pwm += -output*0.5 
 
 			if pitch_pwm > Script.GetParam('RC2_MAX'):
-				pitch_pwm = Script.GetParam('RC2_MAX') - 100
+				pitch_pwm = Script.GetParam('RC2_MAX') - 200
 			elif pitch_pwm < Script.GetParam('RC2_MIN'):
 				pitch_pwm = Script.GetParam('RC2_MIN') + 10
 

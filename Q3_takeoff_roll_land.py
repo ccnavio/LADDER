@@ -52,7 +52,12 @@ def Control_Roll(init_roll, roll_pwm, Start_alt):
 		error = cs.roll - init_roll	
 		Safety_Check()
 		# PID
-		if abs(error) > 2: 
+
+		if abs(error) >= 25:
+			cs.ch7in = 1900
+			Safety_Check()
+
+		elif abs(error) > 2: 
 			accum_error += error * delta_time
 			der_error = (error - last_error)/delta_time
 			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
