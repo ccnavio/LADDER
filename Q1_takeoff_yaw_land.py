@@ -34,11 +34,12 @@ def Control_Yaw(init_yaw, pitch_pwm, Start_alt):
 	print 'In Control Yaw'
 
 	while cs.alt - Start_alt < 1.3:	
-		error = cs.yaw - init_yaw	
-		print "Error: %d" % error
+		# error = cs.yaw - init_yaw	
 
-		Safety_Check()
 		# # yaw correction function and updates pitch of Q1 
+	 	error = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
+		print "Error: %d" % error
+		Safety_Check()
 
 		if abs(error) >= 45:
 			cs.ch7in = 1900
