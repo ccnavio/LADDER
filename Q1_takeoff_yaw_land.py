@@ -6,8 +6,12 @@ import time
 
 def Safety_Check():
 	if cs.ch7in > 1800:
-		for chan in range(1,9):
-			Script.SendRC(chan,0,True)
+		Script.SendRC(1,0,True)
+		Script.SendRC(2,0,True)
+		Script.SendRC(3, Script.GetParam('RC3_MIN'), True)
+		Script.SendRC(4,0,True)
+		Script.SendRC(5,0,True)
+
 		Script.ChangeMode("Stabilize")
 		print 'Safety Override'
 		exit()
@@ -38,7 +42,7 @@ def Control_Yaw(init_yaw, pitch_pwm, Start_alt):
 
 		# # yaw correction function and updates pitch of Q1 
 	 	error = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
-		print "Error: %d" % error
+		print "Error: %d" % error 
 		Safety_Check()
 
 		if abs(error) >= 45:
@@ -86,7 +90,10 @@ PWM_in = 1580 # Jonathan's copter. Find throttle value
 
 Looping_Safety(2000)
 print 'Copter should start arming'
-MAV.doARM(True)
+arming = MAV.doARM(True)
+
+if arming == False:	
+	exit()
 
 Looping_Safety(2000)
 print 'Copter should be armed'				

@@ -2,6 +2,7 @@
 # Mission Planner Script
 # Purpose: Autonomous throttle and unlinking
 
+import sys
 import clr
 clr.AddReference("MissionPlanner")
 import MissionPlanner
@@ -19,14 +20,17 @@ import time
 # but it would mostly be cosmetic.
 def Safety_Check():
 	if cs.ch7in > 1800:
-		for chan in range(1,9):
-			Script.SendRC(chan,0,True)
-			Script.SendRC(3, Script.GetParam('RC3_MIN'), True)
+		Script.SendRC(1,0,True)
+		Script.SendRC(2,0,True)
+		Script.SendRC(3, Script.GetParam('RC3_MIN'), True)
+		Script.SendRC(4,0,True)
+		Script.SendRC(5,0,True)
+
 		Script.ChangeMode("Stabilize")
 		Script.ChangeParam("RC9_FUNCTION", 1)
 		Script.ChangeParam("RC10_FUNCTION", 1)
 		print 'Safety Override'
-		exit()
+		sys.exit()
 	else:
 		return 0
 
@@ -61,9 +65,17 @@ Script.ChangeParam("RC10_FUNCTION", 0)
 
 Script.ChangeMode("Stabilize")
 
+Looping_Safety(2000)
+
 print 'Copter arming'
+sys.exit()
 #Copter wont arm again if left in althold from previous run
-MAV.doARM(True)
+arming = MAV.doARM(True)
+
+if arming == False:
+	print 'Arming failed'
+	sys.exit()
+
 print 'Copter armed'
 Looping_Safety(2000)
 
@@ -82,6 +94,7 @@ rel_alt = 0
 print('Taking off')
 Script.ChangeMode("AltHold")
 Looping_Safety(2000)
+
 while cs.alt - Start_alt < 1.5:
 	Script.SendRC(3,1700,True)
 	Safety_Check()
