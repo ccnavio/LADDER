@@ -2,7 +2,8 @@
 #Script for creating a rough tracker for vehicles without GPS
 # import numpy as np
 # import matplotlib as plt
-# fun fact: mission planner does not like the numpy and matplotlib modules
+# fun fact: mission planner does not like the numpy and matplotlib modules.
+#Mission planner does not have any python in it.
 
 #please figure out how to account for drifting...
 
@@ -38,32 +39,31 @@ def phicalc(phi): #Finding phi from Omega and accounting for negative degrees
     else:
         if phi < 0:
             print 'negative Omega2 = %f ' % phi
-            phi2 = radians(90) + abs(radians(phi))
+            phi2 = radians(90) - abs(radians(phi))
             return phi2
 
         else:
             print 'positive Omega2 = %f ' % phi
-            phi2 = radians(90) - radians(phi)
+            phi2 = radians(90) + radians(phi)
             return phi2
 
 def positiongeneralization(phi): #This function will guesstimate where the vehicle could be
 
-#Note that currently time is set as 1.675 which by my calculations is the [approximate]
-# longest time that the vehicle could travel at 20 degrees before travelling 5 m
+#Note that currently time is set as 0.5s due to the speed at which each loop runs
 #Future work includes changing this to be based on how long the vehicle is at a
 # certain angle
     #simplealgorithim for max distance from zero
-    x = 4.9*(cos(phi)/sin(phi))*(1.675)**2
+    x = 4.9*(cos(phi)/sin(phi))*(0.50)**2
 
     if phi == phi1: #Creating X
-        print 'X position coordinate = %f' % x
+        print 'X distance = %f' % x
         global X
-        X = x
+        X = x + oldvalx
 
     if phi == phi2: #Creating Y
-        print 'Y position coordinate = %f' % x
+        print 'Y distance = %f' % x
         global Y
-        Y = x
+        Y = x + oldvaly
 
 # Opening the two files 'potato' and 'broccoli'
 path = "C:/Users/jgoldsb1/Desktop/"
@@ -76,7 +76,9 @@ WW = open(path+file_name2+".txt", "w")
 
 #While loop for getting position values and saving to files
 count = 0
-while cs.ch3in > Script.GetParam('RC3_MIN') or count < 25:
+oldvalx = 0.0
+oldvaly = 0.0
+while cs.ch3in > Script.GetParam('RC3_MIN') or count < 50:
     Omega1 = cs.roll
     Omega2 = cs.pitch
     phi1 = phicalc(Omega1)
@@ -96,9 +98,18 @@ while cs.ch3in > Script.GetParam('RC3_MIN') or count < 25:
     # print 'The Vector is %f ' % Vec
 
     Script.Sleep(500)
-    count = count + 1
-    print "The count is: %f" % count
-    print ''
+    # Safety for Travelling too far
+    if abs(X) > 5 or abs(Y) > 5:
+        Script.ChangeMode('Land')
+        print 'Safety Safety Safety'
+        count = 50
+    else:
+        count = count + 1
+        print "The count is: %f" % count
+        print ''
+        oldvalx = X
+        oldvaly = Y
+
 W.close()
 WW.close()
 
@@ -118,9 +129,3 @@ WW.close()
 # plt.xlabel('x')
 # plt.ylabel('y')
 # plt.show()
-
-    #Safety for Travelling too far
-    # if X > 5 or Y > 5:
-    #     Script.ChangeMode('Land')
-    #     print 'Safety Safety Safety'
-    #     count = 1001
