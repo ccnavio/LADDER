@@ -6,13 +6,19 @@ import time
 
 def Safety_Check():
 	if cs.ch7in > 1800:
-		Script.SendRC(1,0,True)
-		Script.SendRC(2,0,True)
-		Script.SendRC(3, Script.GetParam('RC3_MIN'), True)
-		Script.SendRC(4,0,True)
-		Script.SendRC(5,0,True)
+		if not Script.SendRC(1,0,True)
+			print 'Channel 1 NOT set to zero'
+		if not Script.SendRC(2,0,True)
+			print 'Channel 2 NOT set to zero'
+		if not Script.SendRC(3, Script.GetParam('RC3_MIN'), True)
+			print 'Channel 3 NOT set to minimum value'
+		if not Script.SendRC(4,0,True)
+			print 'Channel 4 NOT set to zero'
+		if not Script.SendRC(5,0,True)
+			print 'Channel 5 NOT set to zero'
 
-		Script.ChangeMode("Stabilize")
+		if not Script.ChangeMode("Stabilize")
+			print 'Could NOT change mode to Stabilize'
 		print 'Safety Override'
 		exit()
 	else:
@@ -122,14 +128,18 @@ def Control_Yaw(init_yaw, pitch_pwm, Start_alt):
 				pitch_pwm = Script.GetParam('RC2_MAX') - 200
 			elif pitch_pwm < Script.GetParam('RC2_MIN'):
 				pitch_pwm = Script.GetParam('RC2_MIN') + 10
-
+				
 		print 'CH2 In: %d' % pitch_pwm
 		Script.SendRC(2, pitch_pwm, True)
+		print pitch_pwm
+		if not Script.SendRC( 2, pitch_pwm, True)
+			print 'Channel 2 pitch pwm NOT sent'
 		Safety_Check()
 
 # ---------------------------- MAIN PROGRAM ---------------------------- #
 # Takeoff parameters
-Script.ChangeMode("Stabilize")
+if not Script.ChangeMode("Stabilize")
+	print 'Could NOT change to Stabilize'
 print 'Starting Script'
 # implement for all channels from 1-9
 
@@ -137,13 +147,17 @@ print 'Starting Script'
 pitch_pwm = cs.ch2in
 
 for chan in range(1,5):
-    Script.SendRC(chan,1500,False)
-    Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
+    if not Script.SendRC(chan,1500,False)
+	print 'Could NOT send 1500 to channel: %d' % chan
+    if not Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
+	print 'Could NOT send minimum value to channel: %d' % chan
 
 print 'Initializing 6-9 to False'
 for chan in range (6,9):
-	Script.SendRC(chan,0,False)
-	Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
+	if not Script.SendRC(chan,0,False)
+		print 'Could NOT set channel: %d to zero' % chan
+	if not Script.SendRC(3,Script.GetParam('RC3_MIN'), True)
+		print 'Could NOT set channel: %d to minimum value' % chan
 
 Start_alt = cs.alt
 init_yaw = cs.yaw
@@ -167,9 +181,15 @@ print 'Copter should be armed'
 # monitor the movement of the pixhawk. As the pixhawk moves, the roll
 # degree changes accordingly. As of now, the angle of degree change will
 # be set to 5 before wanting to fix the displacement.
+<<<<<<< HEAD
 print 'Initial Yaw: %d' % init_yaw
 Script.SendRC(3, PWM_in, True)
 Check_Status()
+=======
+print init_yaw
+if not Script.SendRC(3, PWM_in, True)
+	print 'Could NOT send channel 3 PWM_in'
+>>>>>>> 647739c5ade34e2810f3083eac73845e6a3b2f34
 Control_Yaw(init_yaw, pitch_pwm, Start_alt)
 print 'Exit Control_Yaw'
 
@@ -180,14 +200,16 @@ while cs.mode != 'AltHold':
 	Script.ChangeMode("AltHold")
 
 # Landing sequence
-Script.SendRC(3, PWM_in, True)
+if not Script.SendRC(3, PWM_in, True)
+	print 'Could not send channel 3 PWM_in'
 
 # Script.ChangeParam("LAND_SPEED", 30)
 # Script.ChangeMode("Land")
 # print 'Landing'
 
 for chan in range(1,9):
-	Script.SendRC(chan,0,True)
+	if not Script.SendRC(chan,0,True)
+		print 'Could not set channel: %d to zero' % chan
 
 print 'Copter Disarming'
 MAV.doARM(False)
