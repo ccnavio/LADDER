@@ -3,6 +3,8 @@
 
 import math
 import time
+# global exit_arm
+# exit_arm = 0
 
 def Safety_Check():
 	if cs.ch7in > 1800:
@@ -17,6 +19,69 @@ def Safety_Check():
 		exit()
 	else:
 		return 0
+
+def Check_Status():
+
+	KILLROLL=0
+
+	if cs.alt - Start_alt > 1.5:
+		print 'Exceeded 1.5m'
+		KILLROLL=1
+	elif abs(cs.roll) > 15:
+		KILLROLL=1
+		print 'Exceeded roll of 15'
+	elif cs.ch3in > 1800:
+		KILLROLL=1
+		print 'Ch 3 in exceeded 1800'
+	elif cs.ch3out > 1800: #roll specific
+		KILLROLL=1
+		print 'Ch 3 out exceeded 1800'
+	elif abs(cs.climbrate) > .75:
+		KILLROLL=1
+		print 'Exceeded climbrate'
+	elif abs(cs.pitch) > 15:
+		KILL=1
+		print 'Exceeded pitch of 15 degrees'
+	else:
+		print 'Ok'
+		
+	if KILLROLL==1:
+		Script.SendRC(1,0,True)
+		Script.SendRC(2,0,True)
+		Script.SendRC(3, Script.GetParam('RC3_MIN'), True)
+		Script.SendRC(4,0,True)
+		Script.SendRC(5,0,True)
+		Script.ChangeMode("Stabilize")
+		print 'Safety Override'
+		exit()
+	else:
+		return 0 
+
+def Arming_Check():
+	attempt = 0
+	yawcenter = cs.ch4in
+	while cs.armed == False:
+		Safety_Check()
+		print 'MAV command failed to arm, trying again'
+		if attempt > 7:
+			Script.SendRC(3,992,True)
+			Script.SendRC(4,2015,True)
+			print 'Attempting to manually arm'
+			Looping_Safety(3000)
+			if cs.armed == False:
+				print 'Arming failure, please reboot'
+				Script.SendRC(7,1900,True)
+				Safety_Check()
+		Looping_Safety(200)
+		MAV.doARM(True)
+		attempt = attempt + 1
+		print 'Attempt to arm #%d' % attempt
+
+	#Checks to ensure that you dont take off with extreme yaw
+	Script.SendRC(4,yawcenter,True)
+	while cs.ch4in != yawcenter:
+		Looping_Safety(50)
+		print 'Yaw not aligned'
 
 # Instead of Script.Sleep this will allow 
 # safety loop to continue checking time in ms
@@ -42,25 +107,28 @@ def Control_Roll(init_roll, roll_pwm, Start_alt):
 	Kd = 0.0036
 	check = 0
 	print 'In Control Roll'
-
+	Check_Status()
 	# Change to 1.6?
-	while cs.alt - Start_alt < 1.5:	
+	while cs.mode == 'Stabilize':
+		Check_Status()
+		Safety_Check()
 
 		if cs.alt - Start_alt > 1.3:
 			check += 1
 			if check == 15:
 				return 0
-				print 'Exiting check alt'
+				print 'Achieved constant alt, exiting control roll'
 
-		print 'While loop'
+		print 'Control roll loop'
 		error = cs.roll - init_roll	
-		Safety_Check()
-		# PID
 
-		if abs(error) >= 25:
+		#Max angle
+		if abs(error) >= 15:
 			cs.ch7in = 1900
+			print 'Max angle in control_roll'
 			Safety_Check()
 
+		#PID
 		elif abs(error) > 2: 
 			accum_error += error * delta_time
 			der_error = (error - last_error)/delta_time
@@ -69,17 +137,21 @@ def Control_Roll(init_roll, roll_pwm, Start_alt):
 
 			roll_pwm += -output*0.5 
 
-			if roll_pwm > Script.GetParam('RC3_MAX'):
-				roll_pwm = Script.GetParam('RC3_MAX') - 100
-			elif roll_pwm < Script.GetParam('RC3_MIN'):
-				roll_pwm = Script.GetParam('RC3_MIN') + 10
+			if roll_pwm > rc3max:
+				roll_pwm = rc3max - 100
+			elif roll_pwm < rc3min:
+				roll_pwm = rc3min + 10
 
-		print roll_pwm
+		Check_Status()
+		Safety_Check()
+		print 'Throttle input: %f' % roll_pwm
 		Script.SendRC( 3, roll_pwm, True)
 		Safety_Check()
 
-# --------------------------------- MAIN PROGRAM --------------------------------- #
-# Takeoff parameters
+	print 'Happily exiting control roll'
+
+# ********************************* MAIN PROGRAM ********************************** #
+
 Script.ChangeMode("Stabilize")
 print 'Starting Script'
 # implement for all channels from 1-9s
@@ -96,16 +168,30 @@ Start_alt = cs.alt
 init_roll = cs.roll
 init_yaw = cs.yaw
 PWM_in = 1460 # Jake's copter. Find throttle value
+KILLROLL=0
+rc3max = Script.GetParam('RC3_MAX') 
+rc3min = Script.GetParam('RC3_MIN')
+
+#ALTHOLD PARAMS
+# Switch deadband (THR_DZ) to 10%
+# A value of 100 means deadband is 10% above and below 50% 
+# throttle (40%-60% throttle will trigger alt hold)
+Script.ChangeParam("THR_DZ", 100)
+
+#Max speed the pilot may request, in cm/s from 50 to 500.
+Script.ChangeParam("PILOT_VELZ_MAX", 50)
 
 Looping_Safety(2000)
+
+
+# ----------------------------------- TAKEOFF ------------------------------------- #
 print 'Copter should start arming'
 arming = MAV.doARM(True)
 
-if arming == False:	
-	exit()
-
-Looping_Safety(2000)
-print 'Copter should be armed'				
+Arming_Check()
+print 'Copter armed'
+Looping_Safety(3000)
+				
 
 # Takeoff parameters of Q3 would include this:
 # If it's in stabilize, the roll and pitch will level
@@ -116,13 +202,16 @@ print 'Copter should be armed'
 # monitor the movement of the pixhawk. As the pixhawk moves, the roll
 # degree changes accordingly. As of now, the angle of degree change will
 # be set to 5 before wanting to fix the displacement.
-print init_roll
+print 'Initial roll: %f' % init_roll
 Script.SendRC(3, PWM_in, True)
 Control_Roll(init_roll, PWM_in, Start_alt)
-print 'Exit Control_Roll'
 
-# Script.SendRC(3, PWM_in, True)
-Script.ChangeMode("AltHold")
+print 'Exited Control_Roll'
+
+Script.SendRC(3, PWM_in, True)
+Check_Status()
+print 'Throttle in = %d' %cs.ch3in
+print 'Holding altitude for 4 sec'
 Looping_Safety(4000)
 
 # Landing sequence
@@ -132,11 +221,7 @@ Looping_Safety(4000)
 # while cs.alt > Start_alt:
 # 	Safety_Check()
 
-Script.SendRC(3, PWM_in, True)
-
-while cs.alt > Start_alt:
-	Safety_Check()
-
+print 'Ending script'
 for chan in range(1,9):
 	Script.SendRC(chan,0,True)
 
