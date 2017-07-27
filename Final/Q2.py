@@ -20,7 +20,10 @@ def Safety_Check(kill):
 		for chan in range(6,9):
 			if not Script.SendRC(chan,0,True):
 				print 'SAFETY CHECK: Channel %d failed!' % chan
-				kill = False
+		MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0)
+		MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 1500, 0, 0, 0, 0, 0)
+		Script.ChangeParam("RC9_FUNCTION", 1)
+		Script.ChangeParam("RC10_FUNCTION", 1)
 		sys.exit()
 	else:
 		return 0
@@ -44,7 +47,7 @@ def Initialize():
 		if not Script.SendRC(chan,0,False):
 			print 'Could NOT set channel: %d to zero' % chan
 
-def Check_Status(rel_alt, kill): 
+def Check_Status(rel_alt, kill, start_alt): 
 	Safety_Check(kill)
 	if cs.climbrate > .60:
 		print 'Exceeded max climbrate. Climbrate = %f m/s.' % cs.climbrate
@@ -67,10 +70,11 @@ def Check_Status(rel_alt, kill):
 		Safety_Check(kill)
 
 	else:
+		kill = False
 		return 0
 	
 ## FOR QUADACOPTERS
-# def Mode_Check():
+# def Mode_Check(thr_in):
 # 	if cs.mode == 'AltHold':
 # 		Safety_Check(kill)
 # 		print cs.mode
@@ -100,14 +104,31 @@ def Manual_Arm():
 			Looping_Safety(50)
 			print 'Yaw not aligned, please wait'
 
-# ************************ MAIN PROGRAM *********************** #
-rel_alt = cs.alt - start_alt
+
+# ONLY CHANGE THESE VARIABLES --------------------------------- # 
+
+thr_in = 1750
+unlinking_alt = 1.0 # BE SURE TO CHANGE ON ALL 3 VEHICLES
+
+# ------------------------------------------------------------- #
 pitch_pwm = cs.ch2in
 start_alt = cs.alt
-init_yaw = cs.yaw
 kill = False
+init_yaw = cs.yaw
+rel_alt = cs.alt - start_alt
+rc8_min = Script.GetParam('RC8_MIN')
+rc8_max = Script.GetParam('RC8_MAX')
 rc9_min = Script.GetParam('RC9_MIN')
 rc10_min = Script.GetParam('RC10_MIN')
+# print 'Let''s goooo'
+# Looping_Safety(3000)
+# print 'Linking'
+# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 2000, 0, 0, 0, 0, 0)
+# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 2000, 0, 0, 0, 0, 0)
+# Looping_Safety(1000)
+# print 'Neutral switch'
+# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0)
+# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 1500, 0, 0, 0, 0, 0)
 
 # Handing over EPM control to the script
 Script.ChangeParam("RC9_FUNCTION", 0)
@@ -129,35 +150,32 @@ if not Script.ChangeParam("LAND_SPEED", 30):
 	kill = True
 	Safety_Check(kill)
 
-# ONLY CHANGE THESE VARIABLES --------------------------------- # 
-
-thr_in = 1650
-unlinking_alt = 1.0 # BE SURE TO CHANGE ON ALL 3 VEHICLES
-
-# ------------------------------------------------------------- #
-
+# ************************ MAIN PROGRAM *********************** #
 Initialize()
-
+Script.ChangeMode('AltHold')
+kill = False
+print kill
 if cs.mode != 'AltHold':
 	print 'Incorrect flight mode. Switch to AltHold.'
-	kill = 1 
+	kill = True
 	Safety_Check(kill)
 
 print 'Arming'
-if MAV.doARM(True):
-	print 'Armed'
-	Check_Status(rel_alt, kill)
-	Safety_Check(kill)
-elif cs.armed == True:
-	print 'Already Armed'
-elif cs.armed == False:
-	print 'Attempting to manually arm'
-	Manual_Arm()
+while cs.armed == False:
+	if MAV.doARM(True):
+		print 'Armed'
+		Check_Status(rel_alt, kill, start_alt)
+		Safety_Check(kill)
+		if cs.armed == False:
+			print 'Attempting to manually arm'
+			Manual_Arm()
+	elif cs.armed == True:
+		print 'Already Armed'
 
 # ------------------------- TAKEOFF --------------------------- #
-Check_Status(rel_alt, kill)
+Check_Status(rel_alt, kill, start_alt)
 
-print 'Waiting 3 seconds before throttling up to 1650'
+print 'Waiting 3 seconds before throttling up to %d' % thr_in
 Looping_Safety(2000)
 print 'Throttling up'
 Looping_Safety(1000)
@@ -167,9 +185,11 @@ if not Script.SendRC(3, thr_in, True):
 	kill = True
 	Safety_Check(kill)
 
+start_alt = cs.alt
 while rel_alt < unlinking_alt:
 	print 'Relative altitude: %f' % rel_alt
-	Check_Status(rel_alt, kill)
+	Check_Status(rel_alt, kill, start_alt)
+	rel_alt = cs.alt - start_alt
 
 # --------------------- HOVER & UNLINK ------------------------ #
 if not Script.SendRC(3,1500,True):
@@ -177,53 +197,70 @@ if not Script.SendRC(3,1500,True):
 	kill = 1
 	Safety_Check(kill)
 
-hover_start = cs.timeInAir
+# hover_start = cs.timeInAir
+# print 'Hovering for 3 seconds'
+# print 'hover start =' % hover_start
+# while (cs.timeInAir - hover_start) < 3:
+# 	Check_Status(rel_alt, kill, start_alt)
+# 	print cs.timeInAir
+
 print 'Hovering for 3 seconds'
-while (cs.timeInAir - hover_start) < 3:
-	Check_Status(rel_alt, kill)
+Looping_Safety(3000)
 
-# ADD DUMMY SET SERVO COMMAND TO TRIGGER ALTHOLD IN QUADS
+print 'Putting quads into AltHold'
+print '2 seconds to unlinking'
+Script.SendRC(8, rc8_max, True) # Tells pi to switch quads to althold
 # Looping_Safety(2000)
-# Disengage EPM
-unlink_start = cs.timeInAir
-MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, rc9_min, 0, 0, 0, 0, 0)
-MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, rc10_min, 0, 0, 0, 0, 0)
-print 'Unlinked'
-print 'Hold for 3 seconds'
-while (cs.timeInAir - unlink_start) < 3:
-	Check_Status(rel_alt, kill)
 
+# Disengage EPM
+print 'Unlinking'
+MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, rc9_min, 0, 0, 0, 0, 0)
+# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, rc10_min, 0, 0, 0, 0, 0)
+print 'Unlinked'
+print 'Hold for 2 seconds'
+Looping_Safety(2000)
 # Return to neutral
 MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0)
-MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 1500, 0, 0, 0, 0, 0)
+# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 1500, 0, 0, 0, 0, 0)
 print 'EPM switch returned to neutral'
 
 # ---------------------- CLOCKWISE TURN ---------------------- #
-Check_Status(rel_alt, kill)
+Check_Status(rel_alt, kill, start_alt)
 init_yaw = cs.yaw 
 delta_yaw = 0
 yaw_in_neut = cs.ch4in
 print 'Initiating 60 degree CW turn'
 # Check is cs.turnrate would be useful here for safety checking
 while delta_yaw < 30:
+	Safety_Check(kill)
+	delta_yaw = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
+	print 'Delta Yaw = %f degrees' % delta_yaw
+	Script.SendRC(4, yaw_in_neut + 100,True)
+	Check_Status(rel_alt, kill, start_alt)
+print 'Slowing turn rate by 50%'
+while delta_yaw < 60:
+	Safety_Check(kill)
 	delta_yaw = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
 	print 'Delta Yaw = %f degrees' % delta_yaw
 	Script.SendRC(4, yaw_in_neut + 50,True)
-	Check_Status(rel_alt, kill)
-print 'Slowing turn rate by 50%'
-while delta_yaw < 60:
-	delta_yaw = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
-	print 'Delta Yaw = %f degrees' % delta_yaw
-	Script.SendRC(4, yaw_in_neut + 25,True)
-	Check_Status(rel_alt, kill)
+	Check_Status(rel_alt, kill, start_alt)
 print 'Turn complete'
 # ------------------------- LANDING --------------------------- #
 print 'Switching to Land mode'
+print 'Sending Pi command for Land mode'
+rc8_min = Script.GetParam('RC8_MIN') # Tells pi to switch HEX
+Script.ChangeMode("Land")
 
-if not Script.ChangeMode("Land"):
-	print 'Failed to enter landing mode, returning user control'
-	kill = True
-	Safety_Check(kill)
+final_mode = cs.mode
+if final_mode != 'Land':
+	print 'Not in land mode'
+	if not Script.ChangeMode("Land"):
+		print 'Failed to enter landing mode, returning user control'
+		kill = True
+		Safety_Check(kill)
+
+Script.ChangeParam("RC9_FUNCTION", 1)
+Script.ChangeParam("RC10_FUNCTION", 1)
 
 while cs.landed == False:
 	print 'Landing'
