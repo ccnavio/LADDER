@@ -55,6 +55,7 @@ def positiongeneralization(phi): #This function will guesstimate where the vehic
     #simplealgorithim for max distance from zero
     x = 4.9*(cos(phi)/sin(phi))*(0.50)**2
 
+
     if phi == phi1: #Creating X
         print 'X distance = %f' % x
         global X
@@ -69,8 +70,10 @@ def positiongeneralization(phi): #This function will guesstimate where the vehic
 path = "C:/Users/jgoldsb1/Desktop/"
 file_name = "potato"
 file_name2 = "broccoli"
+file_name3 = "asparagus"
 W = open(path+file_name+".txt", "w")
 WW = open(path+file_name2+".txt", "w")
+Z = open(path+file_name3+'.txt', "w")
 # R = open(path+file_name+'.txt', "r")
 # RR = open(path+file_name2+'.txt', "r")
 
@@ -78,6 +81,10 @@ WW = open(path+file_name2+".txt", "w")
 count = 0
 oldvalx = 0.0
 oldvaly = 0.0
+z0 = cs.alt
+if z0 < 0:
+    z0 = 0
+
 while cs.ch3in > Script.GetParam('RC3_MIN') or count < 50:
     Omega1 = cs.roll
     Omega2 = cs.pitch
@@ -92,6 +99,16 @@ while cs.ch3in > Script.GetParam('RC3_MIN') or count < 50:
     positiongeneralization(phi2)
     print 'Finished positiongeneralization2'
 
+    z = cs.alt
+    if z < 0:
+        z = 0
+        print 'The new value of z is %f ' % z
+        Z.write("%f \n" % z)
+    else:
+        z = z - z0
+        print 'The value of z is %f ' % z
+        Z.write("%f \n" % z)
+
     # Vec = sqrt(X**2 + Y**2)
     W.write("%f \n" % X) #Writing to the files
     WW.write("%f \n" % Y)
@@ -99,33 +116,50 @@ while cs.ch3in > Script.GetParam('RC3_MIN') or count < 50:
 
     Script.Sleep(500)
     # Safety for Travelling too far
-    if abs(X) > 5 or abs(Y) > 5:
+    if abs(X) > 10 or abs(Y) > 10:
         Script.ChangeMode('Land')
         print 'Safety Safety Safety'
         count = 50
     else:
         count = count + 1
-        print "The count is: %f" % count
+        print "\nThe count is: %f" % count
         print ''
         oldvalx = X
         oldvaly = Y
 
 W.close()
 WW.close()
+Z.close()
 
-# Create data
-#this would work maybe if mission planner wasn't too dumb to
-# work with the numpy and matplotlib modules.
-#yay
-
-# x = R.read()
-# y = RR.read()
-# colors = (0,0,0)
-# area = np.pi*3
+# # Create and plot data in three dimensions
+# #This would work if mission planner was using native python but nope
+# #JacobAlanGoldsberry
+# #Work with matplotlib
+# #Plotting X,Y, and Z coordinates in 3 dimensions
+# import numpy as np
+# import matplotlib.pyplot as plt
+# from mpl_toolkits.mplot3d import Axes3D
 #
-# # Plot
-# plt.scatter(x, y, s=area, c=colors, alpha=0.5)
-# plt.title('Scatter plot pythonspot.com')
-# plt.xlabel('x')
-# plt.ylabel('y')
+# #Create Data
+#
+# print x
+# print len(w)
+# print y
+# print len(y)
+# print z
+# print len(z)
+#
+# #3D plot
+# 
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+#
+# for c, m, zlow, zhigh in [('r', 'o', -50, -25), ('b', '^', -30, -5)]:
+#
+#     ax.plot(x, y, z, c=c, marker=m)
+#
+# ax.set_xlabel('X Label')
+# ax.set_ylabel('Y Label')
+# ax.set_zlabel('Z Label')
+#
 # plt.show()
