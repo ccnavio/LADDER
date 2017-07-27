@@ -99,7 +99,7 @@ def Manual_Arm():
 		kill = True
 		Safety_Check(kill)
 	else:
-		Script.SendRC(4,yawcenter,True)
+		Script.SendRC(4,yaw_center,True)
 		while cs.ch4in != yaw_center:
 			Looping_Safety(50)
 			print 'Yaw not aligned, please wait'
@@ -248,9 +248,15 @@ print 'Turn complete'
 # ------------------------- LANDING --------------------------- #
 print 'Switching to Land mode'
 print 'Sending Pi command for Land mode'
-rc8_min = Script.GetParam('RC8_MIN') # Tells pi to switch HEX
-Script.ChangeMode("Land")
+rc12_max = Script.GetParam('RC12_MAX') # Tells pi to switch HEX
+if not Script.SendRC(12, rc12_max, True):
+	print 'Not in land mode'
+	if not Script.ChangeMode("Land"):
+		print 'Failed to enter landing mode, returning user control'
+		kill = True
+		Safety_Check(kill)
 
+Looping_Safety(1000)
 final_mode = cs.mode
 if final_mode != 'Land':
 	print 'Not in land mode'
