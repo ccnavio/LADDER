@@ -128,7 +128,6 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt):
 			last_error = error
 
 			pitch_pwm = mid_pitch - output
-			# pitch_pwm = 1500 + output
 
 		Check_Status(rel_alt, kill, start_alt)
 

@@ -49,7 +49,7 @@ def Initialize():
 
 def Check_Status(rel_alt, kill, start_alt): 
 	Safety_Check(kill)
-	if cs.climbrate > .60:
+	if cs.climbrate > .80:
 		print 'Exceeded max climbrate. Climbrate = %f m/s.' % cs.climbrate
 		kill = True
 		Safety_Check(kill)
@@ -64,7 +64,7 @@ def Check_Status(rel_alt, kill, start_alt):
 		kill = True
 		Safety_Check(kill)
 
-	elif rel_alt > 2:
+	elif rel_alt > 2.5:
 		print 'Exceeded relative altitude of 2m. Rel_alt = %f m.' % rel_alt
 		kill = True
 		Safety_Check(kill)
@@ -73,7 +73,7 @@ def Check_Status(rel_alt, kill, start_alt):
 		kill = False
 		return 0
 	
-## FOR QUADACOPTERS
+## FOR QUADCOPTERS
 # def Mode_Check(thr_in):
 # 	if cs.mode == 'AltHold':
 # 		Safety_Check(kill)
@@ -108,7 +108,7 @@ def Manual_Arm():
 # ONLY CHANGE THESE VARIABLES --------------------------------- # 
 
 thr_in = 1750
-unlinking_alt = 1.0 # BE SURE TO CHANGE ON ALL 3 VEHICLES
+unlinking_alt = 1.5 # BE SURE TO CHANGE ON ALL 3 VEHICLES
 
 # ------------------------------------------------------------- #
 pitch_pwm = cs.ch2in
@@ -120,7 +120,8 @@ rc8_min = Script.GetParam('RC8_MIN')
 rc8_max = Script.GetParam('RC8_MAX')
 rc9_min = Script.GetParam('RC9_MIN')
 rc10_min = Script.GetParam('RC10_MIN')
-# print 'Let''s goooo'
+
+# FOR AUTO LINKING
 # Looping_Safety(3000)
 # print 'Linking'
 # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 2000, 0, 0, 0, 0, 0)
@@ -154,6 +155,8 @@ if not Script.ChangeParam("LAND_SPEED", 30):
 Initialize()
 Script.ChangeMode('AltHold')
 kill = False
+
+Script.SendRC(12, 992,True)
 print kill
 if cs.mode != 'AltHold':
 	print 'Incorrect flight mode. Switch to AltHold.'
