@@ -108,7 +108,7 @@ def Manual_Arm():
 # ONLY CHANGE THESE VARIABLES --------------------------------- # 
 
 thr_in = 1750
-unlinking_alt = 1.5 # BE SURE TO CHANGE ON ALL 3 VEHICLES
+unlinking_alt = 1.0 # BE SURE TO CHANGE ON ALL 3 VEHICLES
 
 # ------------------------------------------------------------- #
 pitch_pwm = cs.ch2in

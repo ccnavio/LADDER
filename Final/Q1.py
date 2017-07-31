@@ -21,7 +21,8 @@ def Safety_Check(kill):
 		for chan in range(6,9):
 			if not Script.SendRC(chan,0,True):
 				print 'SAFETY CHECK: Channel %d failed!' % chan
-		sys.exit()
+		# f.close() #///////////////////////////////////////
+		# sys.exit()
 	else:
 		return 0
 
@@ -136,6 +137,9 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt):
 		elif pitch_pwm < rc_2_min:
 			pitch_pwm = rc_2_min + 10
 
+		# f.write("%f " % error) #///////////////////////////////////////
+		# f.write("%d\n" % pitch_pwm) #//////////////////////////////////
+
 		print 'CH2 In: %d' % pitch_pwm
 		if not Script.SendRC( 2, pitch_pwm, True):
 			print 'Channel 2 input failed to send'
@@ -161,6 +165,12 @@ def Manual_Arm():
 			print 'Yaw not aligned, please wait'
 
 # ************************ MAIN PROGRAM *********************** #
+# save_path = "c:/Users/cnavio/Desktop/Logs/print_testing/"
+# file_name = time.strftime("%m-%d-%Y_%H-%M-%S")
+# complete_path = save_path+file_name+".txt"
+# print complete_path
+# f = open(complete_path, "w")
+#///////////////////////////////////////
 pitch_pwm = cs.ch2in
 start_alt = cs.alt
 init_yaw = cs.yaw
@@ -250,3 +260,5 @@ if MAV.doARM(False):
 	print 'Disarmed'
 else:
 	print 'Warning! Failed to disarm'
+
+# f.close() #///////////////////////////////////////
