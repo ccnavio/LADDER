@@ -52,7 +52,7 @@ def Check_Status(rel_alt, kill):
 		kill = True
 		Safety_Check(kill)
 
-	elif abs(cs.roll) > 15:
+	elif abs(cs.roll) > 25:
 		print 'Exceeded max roll. Roll = %f degrees.' % cs.roll
 		kill = True
 		Safety_Check(kill)
@@ -62,14 +62,13 @@ def Check_Status(rel_alt, kill):
 		kill = True
 		Safety_Check(kill)
 
-	elif rel_alt > 2:
+	elif rel_alt > 2.5:
 		print 'Exceeded relative altitude of 2m. Rel_alt = %f m.' % rel_alt
 		kill = True
 		Safety_Check(kill)
 
 	else:
 		return 0
-
 
 def Mode_Check(thr_in, kill):
 	if cs.mode == 'AltHold':
@@ -98,9 +97,11 @@ def Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt):
 	rc3_min = Script.GetParam('RC3_MIN')
 	start_alt = cs.alt
 
-	Kp = 0.135  # Proportional
-	Ki = 0.09   # Integral
-	Kd = 0.0036 # Derivative
+	#This worked okay but was a little sloppy.
+
+	Kp = 15 # Proportional
+	Ki = 15   # Integral
+	Kd = 2 # Derivative
 
 	# may want to reset rel_alt before this loop to comp. for barometer fluct.
 	while cs.mode == 'Stabilize':
@@ -127,18 +128,24 @@ def Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt):
 			kill = True
 			Safety_Check(kill)
 
-		elif abs(error) > 2:
+		elif abs(error) > 1:
 			accum_error += error * delta_time
 			der_error = (error - last_error)/delta_time
 			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
 			last_error = error
+			print error
 
-			roll_pwm += -output*0.5
+			roll_pwm = 1460 - output*0.8
+			print 'The roll_pwm is %f ' % roll_pwm
+			Safety_Check(kill)
 
 		if roll_pwm > rc3_max:
 			roll_pwm = rc3_max - 100
+			Safety_Check(kill)
+
 		elif roll_pwm < rc3_min:
-			roll_pwm = rc3_min + 10
+			roll_pwm = rc3_min + 100
+			Safety_Check(kill)
 
 		print 'Throttle input: %f' % roll_pwm
 		Script.SendRC( 3, roll_pwm, True)
@@ -146,7 +153,6 @@ def Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt):
 	Mode_Check(thr_in, kill)
 	print 'Mode changed - happily exiting Control_Roll'
 	Check_Status(rel_alt, kill)
-
 
 def Manual_Arm():
 	yaw_center = cs.ch4in
@@ -159,18 +165,20 @@ def Manual_Arm():
 		kill = True
 		Safety_Check(kill)
 	else:
-		Script.SendRC(4,yawcenter,True)
+		Script.SendRC(4,yaw_center,True)
 		while cs.ch4in != yaw_center:
 			Looping_Safety(50)
 			print 'Yaw not aligned, please wait'
+
 # ONLY CHANGE THESE VARIABLES --------------------------------- #
 
 thr_in = 1460
-unlinking_alt = 1.0 # BE SURE TO CHANGE ON ALL 3 VEHICLES
+unlinking_alt = 1.5 # BE SURE TO CHANGE ON ALL 3 VEHICLES
 
 # ------------------------------------------------------------- #
 
 # ************************ MAIN PROGRAM *********************** #
+
 start_alt = cs.alt
 init_roll = cs.roll
 roll_pwm = thr_in
@@ -215,13 +223,17 @@ Check_Status(rel_alt, kill)
 
 print '3 seconds, get ready'
 Looping_Safety(3000)
-print 'Throttling up to 1460'
+print 'Throttling up to 1300'
 Looping_Safety(1000)
 
-if not Script.SendRC(3, thr_in, True):
+if not Script.SendRC(3, 1300, True):
 	print 'Failed to send throttle up command'
 	kill = True
 	Safety_Check(kill)
+
+Looping_Safety(4000)
+print 'Starting to control roll'
+print 'Throttle mid set to 1460'
 
 Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt)
 Mode_Check(thr_in, kill)
