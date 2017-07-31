@@ -21,10 +21,6 @@ def Safety_Check(kill):
 		for chan in range(6,9):
 			if not Script.SendRC(chan,0,True):
 				print 'SAFETY CHECK: Channel %d failed!' % chan
-<<<<<<< HEAD
-=======
-		# f.close() #///////////////////////////////////////
->>>>>>> f9a12121b028ab60c12d6374ff6adee9d01478d0
 		sys.exit()
 	else:
 		return 0
@@ -265,8 +261,3 @@ if MAV.doARM(False):
 	print 'Disarmed'
 else:
 	print 'Warning! Failed to disarm'
-<<<<<<< HEAD
-=======
-
-# f.close() #///////////////////////////////////////
->>>>>>> f9a12121b028ab60c12d6374ff6adee9d01478d0
