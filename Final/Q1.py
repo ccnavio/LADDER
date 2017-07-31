@@ -22,7 +22,7 @@ def Safety_Check(kill):
 			if not Script.SendRC(chan,0,True):
 				print 'SAFETY CHECK: Channel %d failed!' % chan
 		# f.close() #///////////////////////////////////////
-		# sys.exit()
+		sys.exit()
 	else:
 		return 0
 
