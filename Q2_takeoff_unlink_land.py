@@ -10,6 +10,7 @@ clr.AddReference("MAVLink")
 import MAVLink
 import math
 import time
+import io, os
 
 # Safety_Check definition takes no inputs. It reads channel 7,
 # which is initially set to low, and waits for a high signal from
@@ -108,6 +109,15 @@ print 'Starting Script'
 # implement for all channels from 1-9
 start_time = int(round(time.time()*1000))
 
+f=1
+while os.path.exists( 'pressureReadings%s.txt' % f )
+	f += 1
+	
+with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
+	data = '%.2f' % cs.lat + ' ' + '%.2f' % cs.lng + ' ' + '%.2f' % cs.alt + ' ' + '%.3f' % cs.press_abs
+	file.write(u"%s\n" % data)
+	file.close()
+	
 for chan in range(1,5):
     Script.SendRC(chan,1500,False)
     Script.SendRC(3,Script.GetParam('RC3_MIN'),True)
@@ -155,6 +165,10 @@ while cs.alt - Start_alt < 1.5:
 	if cs.mode == 'AltHold':
 		print 'In alt hold, throttling up'
 		Script.SendRC(3,1700,True)
+		with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
+			data = '%.2f' % cs.lat + ' ' + '%.2f' % cs.lng + ' ' + '%.2f' % cs.alt + ' ' + '%.3f' % cs.press_abs
+			file.write(u"%s\n" % data)
+			file.close()
 		Check_Status()
 		Safety_Check()
 
@@ -165,6 +179,10 @@ while cs.alt - Start_alt < 1.5:
 
 # ----------------------------------- HOVER --------------------------------------- #
 Script.SendRC(3,1500,True)
+with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
+	data = '%.2f' % cs.lat + ' ' + '%.2f' % cs.lng + ' ' + '%.2f' % cs.alt + ' ' + '%.3f' % cs.press_abs
+	file.write(u"%s\n" % data)
+	file.close()
 print 'Hovering'
 # --------------------------------- UNLINKING ------------------------------------- #
 # print('Unlinking')
@@ -206,6 +224,10 @@ Looping_Safety(5000)
 # LAND_SPEED = descending speed in cm/s from 30 - 200.
 # If descending from above 10m modify the WPNAV_SPEED_DN parameter
 Script.ChangeParam("LAND_SPEED", 30)
+with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
+	data = '%.2f' % cs.lat + ' ' + '%.2f' % cs.lng + ' ' + '%.2f' % cs.alt + ' ' + '%.3f' % cs.press_abs
+	file.write(u"%s\n" % data)
+	file.close()
 print 'Landing'
 Script.ChangeMode("Land")
 
