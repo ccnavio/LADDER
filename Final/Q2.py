@@ -7,7 +7,7 @@
 import sys, clr
 clr.AddReference("MissionPlanner")
 clr.AddReference("MAVLink")
-import MAVLink, math, time, MissionPlanner
+import MAVLink, math, time, MissionPlanner, io, os
 
 def Safety_Check(kill):
 	if (cs.ch7in > 1800) or kill:
@@ -131,6 +131,10 @@ rc10_min = Script.GetParam('RC10_MIN')
 # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0)
 # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 1500, 0, 0, 0, 0, 0)
 
+#f = 1
+#while os.path.exists( 'pressureReadings%s.txt' % i ):
+#	f += 1
+
 # Handing over EPM control to the script
 Script.ChangeParam("RC9_FUNCTION", 0)
 Script.ChangeParam("RC10_FUNCTION", 0)
@@ -178,6 +182,11 @@ while cs.armed == False:
 # ------------------------- TAKEOFF --------------------------- #
 Check_Status(rel_alt, kill, start_alt)
 
+#with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
+#	data = '%.4f' % cs.lat + ' ' + '%.4f' % cs.lng + ' ' + '%.4f' % cs.alt + ' ' + '%.4f' % cs.press_abs 
+#	file.write(u"%s\n" % data)
+#	file.close()
+
 print 'Waiting 3 seconds before throttling up to %d' % thr_in
 Looping_Safety(2000)
 print 'Throttling up'
@@ -191,6 +200,10 @@ if not Script.SendRC(3, thr_in, True):
 start_alt = cs.alt
 while rel_alt < unlinking_alt:
 	print 'Relative altitude: %f' % rel_alt
+	#with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
+	#	data = '%.4f' % cs.lat + ' ' + '%.4f' % cs.lng + ' ' + '%.4f' % cs.alt + ' ' + '%.4f' % cs.press_abs 
+	#	file.write(u"%s\n" % data)
+	#	file.close()
 	Check_Status(rel_alt, kill, start_alt)
 	rel_alt = cs.alt - start_alt
 
@@ -221,6 +234,10 @@ MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, rc9_min, 0, 0, 0, 0, 0)
 # MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, rc10_min, 0, 0, 0, 0, 0)
 print 'Unlinked'
 print 'Hold for 2 seconds'
+#with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
+#	data = '%.4f' % cs.lat + ' ' + '%.4f' % cs.lng + ' ' + '%.4f' % cs.alt + ' ' + '%.4f' % cs.press_abs 
+#	file.write(u"%s\n" % data)
+#	file.close()
 Looping_Safety(2000)
 # Return to neutral
 MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0)
@@ -240,6 +257,10 @@ while delta_yaw < 30:
 	print 'Delta Yaw = %f degrees' % delta_yaw
 	Script.SendRC(4, yaw_in_neut + 100,True)
 	Check_Status(rel_alt, kill, start_alt)
+	#with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
+	#	data = '%.4f' % cs.lat + ' ' + '%.4f' % cs.lng + ' ' + '%.4f' % cs.alt + ' ' + '%.4f' % cs.press_abs 
+	#	file.write(u"%s\n" % data)
+	#	file.close()
 print 'Slowing turn rate by 50%'
 while delta_yaw < 60:
 	Safety_Check(kill)
@@ -247,6 +268,10 @@ while delta_yaw < 60:
 	print 'Delta Yaw = %f degrees' % delta_yaw
 	Script.SendRC(4, yaw_in_neut + 50,True)
 	Check_Status(rel_alt, kill, start_alt)
+	#with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
+	#	data = '%.4f' % cs.lat + ' ' + '%.4f' % cs.lng + ' ' + '%.4f' % cs.alt + ' ' + '%.4f' % cs.press_abs 
+	#	file.write(u"%s\n" % data)
+	#	file.close()
 print 'Turn complete'
 # ------------------------- LANDING --------------------------- #
 print 'Switching to Land mode'
