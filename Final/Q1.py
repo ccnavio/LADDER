@@ -21,8 +21,7 @@ def Safety_Check(kill):
 		for chan in range(6,9):
 			if not Script.SendRC(chan,0,True):
 				print 'SAFETY CHECK: Channel %d failed!' % chan
-		# f.close() #///////////////////////////////////////
-		# sys.exit()
+		sys.exit()
 	else:
 		return 0
 
@@ -86,7 +85,7 @@ def Mode_Check(thr_in, kill):
 		kill = True
 		Safety_Check(kill)
 
-def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt):
+def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt, thr_in):
 	print 'In Control_Yaw'
 	kill = False
 	start_alt = cs.alt
@@ -94,12 +93,14 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt):
 	Check_Status(rel_alt, kill, start_alt)	
 	rc_2_min = Script.GetParam('RC2_MIN')
 	rc_2_max = Script.GetParam('RC2_MAX')
+	rc_3_min = Script.GetParam('RC3_MIN')
 	delta_time = 0.1
 	accum_error = 0
 	last_error = 0
+	mid_throttle = thr_in
 
-	Kp = 15  # Proportional
-	Ki = 2  # Integral
+	Kp = 2  # Proportional
+	Ki = 5  # Integral
 	Kd = 5  # Derivative
 
 	# may want to reset rel_alt before this loop to comp. for barometer fluct.
@@ -129,18 +130,24 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt):
 			last_error = error
 
 			pitch_pwm = mid_pitch - output
+			thr_in = mid_throttle + abs(output*0.5)
 
 		Check_Status(rel_alt, kill, start_alt)
+
+		if thr_in > 1650:
+			thr_in = 1650
+		elif thr_in < rc_3_min or abs(error) < 2:
+			thr_in = 1580
 
 		if pitch_pwm > rc_2_max:
 			pitch_pwm = rc_2_max - 200
 		elif pitch_pwm < rc_2_min:
 			pitch_pwm = rc_2_min + 10
 
-		# f.write("%f " % error) #///////////////////////////////////////
-		# f.write("%d\n" % pitch_pwm) #//////////////////////////////////
-
+		print 'CH3 In: %d' % thr_in
 		print 'CH2 In: %d' % pitch_pwm
+		if not Script.SendRC( 3, thr_in, True):
+			print 'Channel 3 input failed to send'
 		if not Script.SendRC( 2, pitch_pwm, True):
 			print 'Channel 2 input failed to send'
 
@@ -165,12 +172,6 @@ def Manual_Arm():
 			print 'Yaw not aligned, please wait'
 
 # ************************ MAIN PROGRAM *********************** #
-# save_path = "c:/Users/cnavio/Desktop/Logs/print_testing/"
-# file_name = time.strftime("%m-%d-%Y_%H-%M-%S")
-# complete_path = save_path+file_name+".txt"
-# print complete_path
-# f = open(complete_path, "w")
-#///////////////////////////////////////
 pitch_pwm = cs.ch2in
 start_alt = cs.alt
 init_yaw = cs.yaw
@@ -229,7 +230,7 @@ if not Script.SendRC(3, thr_in, True):
 	kill = True
 	Safety_Check(kill)
 
-Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt)
+Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt, thr_in)
 Mode_Check(thr_in, kill)
 
 # ------------------------- LANDING --------------------------- #
@@ -260,5 +261,3 @@ if MAV.doARM(False):
 	print 'Disarmed'
 else:
 	print 'Warning! Failed to disarm'
-
-# f.close() #///////////////////////////////////////
