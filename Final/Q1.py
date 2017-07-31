@@ -61,7 +61,7 @@ def Check_Status(rel_alt, kill, start_alt):
 		kill = True
 		Safety_Check(kill)
 
-	elif rel_alt > 2:
+	elif rel_alt > 2.5:
 		print 'Exceeded relative altitude of 2m. Rel_alt = %f m.' % rel_alt
 		kill = True
 		Safety_Check(kill)
@@ -89,6 +89,7 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt):
 	print 'In Control_Yaw'
 	kill = False
 	start_alt = cs.alt
+	mid_pitch = pitch_pwm
 	Check_Status(rel_alt, kill, start_alt)	
 	rc_2_min = Script.GetParam('RC2_MIN')
 	rc_2_max = Script.GetParam('RC2_MAX')
@@ -96,9 +97,9 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt):
 	accum_error = 0
 	last_error = 0
 
-	Kp = 0.135  #Proportional
-	Ki = 0.09   #Integral
-	Kd = 0.0036 #Derivative
+	Kp = 15  # Proportional
+	Ki = 2  # Integral
+	Kd = 5  # Derivative
 
 	# may want to reset rel_alt before this loop to comp. for barometer fluct.
 	while cs.mode == 'Stabilize':
@@ -109,12 +110,6 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt):
 			print 'Exceeded %fm' % (unlinking_alt + 0.2)
 			kill = True
 			Safety_Check(kill)
-
-		# if rel_alt > unlinking_alt:
-		# 	check += 1
-		# 	if check == 15:
-		# 		return 0
-		# 		print 'Achieved constant alt, exiting control roll'
 
 	 	error = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
 		print "Error: %d" % error 
@@ -132,13 +127,15 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt):
 			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
 			last_error = error
 
-			pitch_pwm += -output
-			Check_Status(rel_alt, kill, start_alt)
+			pitch_pwm = mid_pitch - output
+			# pitch_pwm = 1500 + output
 
-			if pitch_pwm > rc_2_max:
-				pitch_pwm = rc_2_max - 200
-			elif pitch_pwm < rc_2_min:
-				pitch_pwm = rc_2_min + 10
+		Check_Status(rel_alt, kill, start_alt)
+
+		if pitch_pwm > rc_2_max:
+			pitch_pwm = rc_2_max - 200
+		elif pitch_pwm < rc_2_min:
+			pitch_pwm = rc_2_min + 10
 
 		print 'CH2 In: %d' % pitch_pwm
 		if not Script.SendRC( 2, pitch_pwm, True):
@@ -190,7 +187,7 @@ if not Script.ChangeParam("LAND_SPEED", 30):
 # ONLY CHANGE THESE VARIABLES --------------------------------- # 
 
 thr_in = 1580
-unlinking_alt = 1.0 # BE SURE TO CHANGE ON ALL 3 VEHICLES
+unlinking_alt = 1.5 # BE SURE TO CHANGE ON ALL 3 VEHICLES
 
 # ------------------------------------------------------------- #
 Initialize()
