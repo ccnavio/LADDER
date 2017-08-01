@@ -97,9 +97,9 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt, thr_in):
 	accum_error = 0
 	last_error = 0
 
-	Kp = 2  # Proportional
-	Ki = 5  # Integral
-	Kd = 5  # Derivative
+	Kp = 5  # Proportional
+	Ki = 2  # Integral
+	Kd = 2  # Derivative
 
 	# may want to reset rel_alt before this loop to comp. for barometer fluct.
 	while cs.mode == 'Stabilize':
@@ -107,7 +107,7 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt, thr_in):
 		rel_alt = cs.alt - start_alt
 
 		if rel_alt > (unlinking_alt + 0.5):
-			print 'Exceeded %fm' % (unlinking_alt + 0.2)
+			print 'Exceeded %fm' % (unlinking_alt + 0.3)
 			kill = True
 			Safety_Check(kill)
 
@@ -127,7 +127,7 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt, thr_in):
 			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
 			last_error = error
 
-			pitch_pwm = mid_pitch - output
+			pitch_pwm = mid_pitch - output*0.5
 
 		Check_Status(rel_alt, kill, start_alt)
 
@@ -161,7 +161,9 @@ def Manual_Arm():
 			print 'Yaw not aligned, please wait'
 
 # ************************ MAIN PROGRAM *********************** #
-pitch_pwm = cs.ch2in
+# pitch_pwm = cs.ch2in
+pitch_pwm = 1585 # ONLY FOR TESTING INDOORS
+
 start_alt = cs.alt
 init_yaw = cs.yaw
 kill = False
@@ -195,16 +197,16 @@ if cs.mode != 'Stabilize':
 	print 'Incorrect flight mode. Switch to Stabilize.'
 	kill = 1 
 
-print 'Arming'
-if MAV.doARM(True):
-	print 'Armed'
-	Check_Status(rel_alt, kill, start_alt)
-	Safety_Check(kill)
-elif cs.armed == True:
-	print 'Already Armed'
-elif cs.armed == False:
-	print 'Attempting to manually arm'
-	Manual_Arm()
+# print 'Arming'
+# if MAV.doARM(True):
+# 	print 'Armed'
+# 	Check_Status(rel_alt, kill, start_alt)
+# 	Safety_Check(kill)
+# elif cs.armed == True:
+# 	print 'Already Armed'
+# elif cs.armed == False:
+# 	print 'Attempting to manually arm'
+# 	Manual_Arm()
 	
 # ------------------------- TAKEOFF --------------------------- #
 Check_Status(rel_alt, kill, start_alt)

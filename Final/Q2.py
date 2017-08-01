@@ -7,7 +7,7 @@
 import sys, clr
 clr.AddReference("MissionPlanner")
 clr.AddReference("MAVLink")
-import MAVLink, math, time, MissionPlanner, io, os
+import MAVLink, math, time, MissionPlanner
 
 def Safety_Check(kill):
 	if (cs.ch7in > 1800) or kill:
@@ -92,7 +92,7 @@ def Manual_Arm():
 	yaw_center = cs.ch4in
 	Script.SendRC(3,992,True)
 	Script.SendRC(4,2015,True)
-	Looping_Safety(5000)
+	Looping_Safety(2000)
 	if cs.armed == False:
 		print 'Manual arm failed'
 		print 'Check safety switch or reboot pixhawk'
@@ -107,8 +107,8 @@ def Manual_Arm():
 
 # ONLY CHANGE THESE VARIABLES --------------------------------- # 
 
-thr_in = 1750
-unlinking_alt = 1.5 # BE SURE TO CHANGE ON ALL 3 VEHICLES
+thr_in = 1700
+unlinking_alt = 1.0 # BE SURE TO CHANGE ON ALL 3 VEHICLES
 
 # ------------------------------------------------------------- #
 pitch_pwm = cs.ch2in
@@ -208,7 +208,7 @@ while rel_alt < unlinking_alt:
 	rel_alt = cs.alt - start_alt
 
 # --------------------- HOVER & UNLINK ------------------------ #
-if not Script.SendRC(3,1500,True):
+if not Script.SendRC(3,1522,True):
 	print 'HOVER FAILED'
 	kill = 1
 	Safety_Check(kill)
@@ -250,6 +250,9 @@ init_yaw = cs.yaw
 delta_yaw = 0
 yaw_in_neut = cs.ch4in
 print 'Initiating 60 degree CW turn'
+print 'In %d' % cs.ch3in
+print 'Out %d' % cs.ch3out
+print 'Mode = %s' % cs.mode
 # Check is cs.turnrate would be useful here for safety checking
 while delta_yaw < 30:
 	Safety_Check(kill)
@@ -274,15 +277,16 @@ while delta_yaw < 60:
 	#	file.close()
 print 'Turn complete'
 # ------------------------- LANDING --------------------------- #
-print 'Switching to Land mode'
-print 'Sending Pi command for Land mode'
-rc12_max = Script.GetParam('RC12_MAX') # Tells pi to switch HEX
-if not Script.SendRC(12, rc12_max, True):
-	print 'Not in land mode'
-	if not Script.ChangeMode("Land"):
-		print 'Failed to enter landing mode, returning user control'
-		kill = True
-		Safety_Check(kill)
+# print 'Switching to Land mode'
+# print 'Sending Pi command for Land mode'
+# rc12_max = Script.GetParam('RC12_MAX') # Tells pi to switch HEX
+# if not Script.SendRC(12, rc12_max, True):
+# 	print 'Not in land mode'
+# 	if not Script.ChangeMode("Land"):
+# 		print 'Failed to enter landing mode, returning user control'
+# 		kill = True
+# 		Safety_Check(kill)
+Script.SendRC(3, 1100, True)
 
 Looping_Safety(1000)
 final_mode = cs.mode
