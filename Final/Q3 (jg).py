@@ -99,9 +99,9 @@ def Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt):
 
 	#This worked okay but was a little sloppy.
 
-	Kp = 15 # Proportional
-	Ki = 15   # Integral
-	Kd = 2 # Derivative
+	Kp = 5 # Proportional
+	Ki = 1  # Integral
+	Kd = 1 # Derivative
 
 	# may want to reset rel_alt before this loop to comp. for barometer fluct.
 	while cs.mode == 'Stabilize':
@@ -128,15 +128,17 @@ def Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt):
 			kill = True
 			Safety_Check(kill)
 
-		elif abs(error) > 1:
+		elif abs(error) > 2:
 			accum_error += error * delta_time
 			der_error = (error - last_error)/delta_time
 			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
 			last_error = error
 			print error
 
-			roll_pwm = 1460 - output*0.8
+
+			roll_pwm = 1330 - output*1.0
 			print 'The roll_pwm is %f ' % roll_pwm
+			print 'The output is: %f ' % output
 			Safety_Check(kill)
 
 		if roll_pwm > rc3_max:
@@ -172,7 +174,7 @@ def Manual_Arm():
 
 # ONLY CHANGE THESE VARIABLES --------------------------------- #
 
-thr_in = 1460
+thr_in = 1330
 unlinking_alt = 1.5 # BE SURE TO CHANGE ON ALL 3 VEHICLES
 
 # ------------------------------------------------------------- #
@@ -180,6 +182,10 @@ unlinking_alt = 1.5 # BE SURE TO CHANGE ON ALL 3 VEHICLES
 # ************************ MAIN PROGRAM *********************** #
 
 start_alt = cs.alt
+if start_alt < 0:
+	start_alt = 0
+else:
+	print 'The Starting Altitude is: %f ' % start_alt
 init_roll = cs.roll
 roll_pwm = thr_in
 kill = False
@@ -207,16 +213,16 @@ if cs.mode != 'Stabilize':
 	print 'Incorrect flight mode. Switch to Stabilize.'
 	kill = 1
 
-print 'Arming'
-if MAV.doARM(True):
-	print 'Armed'
-	Check_Status(rel_alt, kill)
-	Safety_Check(kill)
-elif cs.armed == True:
-	print 'Already Armed'
-elif cs.armed == False:
-	print 'Attempting to manually arm'
-	Manual_Arm()
+# print 'Arming'
+# if MAV.doARM(True):
+# 	print 'Armed'
+# 	Check_Status(rel_alt, kill)
+# 	Safety_Check(kill)
+# elif cs.armed == True:
+# 	print 'Already Armed'
+# elif cs.armed == False:
+# 	print 'Attempting to manually arm'
+# 	Manual_Arm()
 
 # ------------------------- TAKEOFF --------------------------- #
 Check_Status(rel_alt, kill)
@@ -226,17 +232,32 @@ Looping_Safety(3000)
 print 'Throttling up to 1300'
 Looping_Safety(1000)
 
-if not Script.SendRC(3, 1300, True):
+if not Script.SendRC(3, 1330, True):
 	print 'Failed to send throttle up command'
 	kill = True
 	Safety_Check(kill)
 
-Looping_Safety(4000)
+Looping_Safety(3000)
 print 'Starting to control roll'
 print 'Throttle mid set to 1460'
 
+rel_alt = cs.alt - start_alt
+while rel_alt < 0.2 and cs.climbrate < 0.15: #Learn how to change variable names in a while loop
+	print 'bloop'
+	rel_alt = cs.alt - start_alt
+	Looping_Safety(100)
+	Safety_Check(kill)
+	print 'rel_alt is = %f ' % rel_alt
+	print 'The climbrate is = %f ' % cs.climbrate
+
+# if rel_alt > 0:
 Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt)
 Mode_Check(thr_in, kill)
+
+# else:
+# 	print 'Not above rel_alt'
+# 	print 'rel_alt is: %f ' % rel_alt
+# 	Safety_Check(kill)
 
 # ------------------------- LANDING --------------------------- #
 # wait_to_land = cs.timeInAir
