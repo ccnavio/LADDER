@@ -269,7 +269,7 @@ if cs.mode == 'AltHold':
 
     Looping_Safety(1000)
 
-    if cs.groundspeed >= 0.20:
+    if cs.groundspeed >= 0.50:
         kill = True
         Safety_Check(kill)
 
