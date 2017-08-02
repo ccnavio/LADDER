@@ -51,7 +51,6 @@ def Check_Status(rel_alt, kill):
 		print 'Exceeded max climbrate. Climbrate = %f m/s.' % cs.climbrate
 		kill = True
 		Safety_Check(kill)
-
 	elif abs(cs.roll) > 25:
 		print 'Exceeded max roll. Roll = %f degrees.' % cs.roll
 		kill = True
@@ -97,7 +96,7 @@ def Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt):
 	rc3_min = Script.GetParam('RC3_MIN')
 	start_alt = cs.alt
 
-	#This worked okay but was a little sloppy.
+	#Very good roll response
 
 	Kp = 5 # Proportional
 	Ki = 1  # Integral
@@ -115,13 +114,8 @@ def Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt):
 			kill = True
 			Safety_Check(kill)
 
-		# if rel_alt > unlinking_alt:
-		# 	check += 1
-		# 	if check == 15:
-		# 		return 0
-		# 		print 'Achieved constant alt, exiting control roll'
-
-		error = cs.roll - init_roll
+		error = cs.roll - init_roll + 7
+		print 'Output error: %f' % error
 
 		if abs(error) >= 15:
 			print 'Exceeded roll 15 degrees (from within control_roll)'
@@ -129,14 +123,14 @@ def Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt):
 			Safety_Check(kill)
 
 		elif abs(error) > 2:
-			accum_error += error * delta_time
-			der_error = (error - last_error)/delta_time
-			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
-			last_error = error
-			print error
+			new_err = error
+			accum_error += new_err * delta_time
+			der_error = (new_err - last_error)/delta_time
+			output = (new_err * Kp) + (accum_error * Ki) + (der_error * Kd)
+			last_error = new_err
 
-
-			roll_pwm = 1330 - output*1.0
+			roll_pwm = 1330 - output*0.5
+			print '*******************'
 			print 'The roll_pwm is %f ' % roll_pwm
 			print 'The output is: %f ' % output
 			Safety_Check(kill)
@@ -160,7 +154,7 @@ def Manual_Arm():
 	yaw_center = cs.ch4in
 	Script.SendRC(3,992,True)
 	Script.SendRC(4,2015,True)
-	Looping_Safety(5000)
+	Looping_Safety(2000)
 	if cs.armed == False:
 		print 'Manual arm failed'
 		print 'Check safety switch or reboot pixhawk'
@@ -213,23 +207,23 @@ if cs.mode != 'Stabilize':
 	print 'Incorrect flight mode. Switch to Stabilize.'
 	kill = 1
 
-# print 'Arming'
-# if MAV.doARM(True):
-# 	print 'Armed'
-# 	Check_Status(rel_alt, kill)
-# 	Safety_Check(kill)
-# elif cs.armed == True:
-# 	print 'Already Armed'
-# elif cs.armed == False:
-# 	print 'Attempting to manually arm'
-# 	Manual_Arm()
+print 'Arming'
+if MAV.doARM(True):
+	print 'Armed'
+	Check_Status(rel_alt, kill)
+	Safety_Check(kill)
+elif cs.armed == True:
+	print 'Already Armed'
+elif cs.armed == False:
+	print 'Attempting to manually arm'
+	Manual_Arm()
 
 # ------------------------- TAKEOFF --------------------------- #
 Check_Status(rel_alt, kill)
 
 print '3 seconds, get ready'
 Looping_Safety(3000)
-print 'Throttling up to 1300'
+print 'Throttling up to 1330'
 Looping_Safety(1000)
 
 if not Script.SendRC(3, 1330, True):
@@ -238,8 +232,6 @@ if not Script.SendRC(3, 1330, True):
 	Safety_Check(kill)
 
 Looping_Safety(3000)
-print 'Starting to control roll'
-print 'Throttle mid set to 1460'
 
 rel_alt = cs.alt - start_alt
 while rel_alt < 0.2 and cs.climbrate < 0.15: #Learn how to change variable names in a while loop
@@ -250,14 +242,37 @@ while rel_alt < 0.2 and cs.climbrate < 0.15: #Learn how to change variable names
 	print 'rel_alt is = %f ' % rel_alt
 	print 'The climbrate is = %f ' % cs.climbrate
 
-# if rel_alt > 0:
+print 'Starting to control roll'
+print 'Throttle mid set to 1330'
+
 Control_Roll(init_roll, roll_pwm, start_alt, unlinking_alt, rel_alt)
 Mode_Check(thr_in, kill)
+
+#Hopefully we are unlinked at this point
 
 # else:
 # 	print 'Not above rel_alt'
 # 	print 'rel_alt is: %f ' % rel_alt
 # 	Safety_Check(kill)
+
+#Rolling To The Left After Unlinking
+if cs.mode == 'AltHold':
+    Script.SendRC(1,1759,True)
+
+    while cs.groundspeed < 0.20:
+        Safety_Check(kill)
+        print 'Vehicle rolling left'
+        print 'GroundSpeed is %f' % cs.groundspeed
+
+    Script.SendRC(1,1504,True)
+    print 'Finished rolling, proceeding to land'
+
+    Looping_Safety(1000)
+
+    if cs.groundspeed >= 0.20:
+        kill = True
+        Safety_Check(kill)
+
 
 # ------------------------- LANDING --------------------------- #
 # wait_to_land = cs.timeInAir
