@@ -61,7 +61,7 @@ def Check_Status(rel_alt, kill, start_alt):
 		kill = True
 		Safety_Check(kill)
 
-	elif rel_alt > 2.5:
+	elif rel_alt > 3:
 		print 'Exceeded relative altitude of 2m. Rel_alt = %f m.' % rel_alt
 		kill = True
 		Safety_Check(kill)
@@ -121,18 +121,18 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt, thr_in):
 			kill = True
 			Safety_Check(kill)
 
-		elif abs(error) > 2: 
+		elif abs(error) > 1: 
 			accum_error += error * delta_time
 			der_error = (error - last_error)/delta_time
 			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
 			last_error = error
 
-			pitch_pwm = mid_pitch - output*0.5
+			pitch_pwm = mid_pitch - output*1
 
 		Check_Status(rel_alt, kill, start_alt)
 
 		if pitch_pwm > rc_2_max:
-			pitch_pwm = rc_2_max - 200
+			pitch_pwm = rc_2_max - 50
 		elif pitch_pwm < rc_2_min:
 			pitch_pwm = rc_2_min + 10
 
@@ -161,8 +161,8 @@ def Manual_Arm():
 			print 'Yaw not aligned, please wait'
 
 # ************************ MAIN PROGRAM *********************** #
-# pitch_pwm = cs.ch2in
-pitch_pwm = 1585 # ONLY FOR TESTING INDOORS
+pitch_pwm = cs.ch2in
+# pitch_pwm = 1585 # ONLY FOR TESTING INDOORS
 
 start_alt = cs.alt
 init_yaw = cs.yaw
@@ -197,16 +197,16 @@ if cs.mode != 'Stabilize':
 	print 'Incorrect flight mode. Switch to Stabilize.'
 	kill = 1 
 
-# print 'Arming'
-# if MAV.doARM(True):
-# 	print 'Armed'
-# 	Check_Status(rel_alt, kill, start_alt)
-# 	Safety_Check(kill)
-# elif cs.armed == True:
-# 	print 'Already Armed'
-# elif cs.armed == False:
-# 	print 'Attempting to manually arm'
-# 	Manual_Arm()
+print 'Arming'
+if MAV.doARM(True):
+	print 'Armed'
+	Check_Status(rel_alt, kill, start_alt)
+	Safety_Check(kill)
+elif cs.armed == True:
+	print 'Already Armed'
+elif cs.armed == False:
+	print 'Attempting to manually arm'
+	Manual_Arm()
 	
 # ------------------------- TAKEOFF --------------------------- #
 Check_Status(rel_alt, kill, start_alt)

@@ -207,16 +207,16 @@ if cs.mode != 'Stabilize':
 	print 'Incorrect flight mode. Switch to Stabilize.'
 	kill = 1
 
-# print 'Arming'
-# if MAV.doARM(True):
-# 	print 'Armed'
-# 	Check_Status(rel_alt, kill)
-# 	Safety_Check(kill)
-# elif cs.armed == True:
-# 	print 'Already Armed'
-# elif cs.armed == False:
-# 	print 'Attempting to manually arm'
-# 	Manual_Arm()
+print 'Arming'
+if MAV.doARM(True):
+	print 'Armed'
+	Check_Status(rel_alt, kill)
+	Safety_Check(kill)
+elif cs.armed == True:
+	print 'Already Armed'
+elif cs.armed == False:
+	print 'Attempting to manually arm'
+	Manual_Arm()
 
 # ------------------------- TAKEOFF --------------------------- #
 Check_Status(rel_alt, kill)

@@ -72,21 +72,6 @@ def Check_Status(rel_alt, kill, start_alt):
 	else:
 		kill = False
 		return 0
-	
-## FOR QUADCOPTERS
-# def Mode_Check(thr_in):
-# 	if cs.mode == 'AltHold':
-# 		Safety_Check(kill)
-# 		print cs.mode
-# 		if cs.ch3in > 1700 or cs.ch3in < 1400:
-# 			if not Script.SendRC(3, thr_in, True):
-# 				print 'Thr in failed - see Mode_Check'
-# 				kill = True
-# 				Safety_Check(kill)
-# 	else:
-# 		print 'ALERT: NOT IN ALTHOLD'
-# 		kill = True
-# 		Safety_Check(kill)
 
 def Manual_Arm():
 	yaw_center = cs.ch4in
@@ -107,8 +92,8 @@ def Manual_Arm():
 
 # ONLY CHANGE THESE VARIABLES --------------------------------- # 
 
-thr_in = 1700
-unlinking_alt = 1.0 # BE SURE TO CHANGE ON ALL 3 VEHICLES
+thr_in = 1750
+unlinking_alt = 1.5 # BE SURE TO CHANGE ON ALL 3 VEHICLES
 
 # ------------------------------------------------------------- #
 pitch_pwm = cs.ch2in
@@ -120,20 +105,6 @@ rc8_min = Script.GetParam('RC8_MIN')
 rc8_max = Script.GetParam('RC8_MAX')
 rc9_min = Script.GetParam('RC9_MIN')
 rc10_min = Script.GetParam('RC10_MIN')
-
-# FOR AUTO LINKING
-# Looping_Safety(3000)
-# print 'Linking'
-# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 2000, 0, 0, 0, 0, 0)
-# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 2000, 0, 0, 0, 0, 0)
-# Looping_Safety(1000)
-# print 'Neutral switch'
-# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0)
-# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 1500, 0, 0, 0, 0, 0)
-
-#f = 1
-#while os.path.exists( 'pressureReadings%s.txt' % i ):
-#	f += 1
 
 # Handing over EPM control to the script
 Script.ChangeParam("RC9_FUNCTION", 0)
@@ -182,11 +153,6 @@ while cs.armed == False:
 # ------------------------- TAKEOFF --------------------------- #
 Check_Status(rel_alt, kill, start_alt)
 
-#with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
-#	data = '%.4f' % cs.lat + ' ' + '%.4f' % cs.lng + ' ' + '%.4f' % cs.alt + ' ' + '%.4f' % cs.press_abs 
-#	file.write(u"%s\n" % data)
-#	file.close()
-
 print 'Waiting 3 seconds before throttling up to %d' % thr_in
 Looping_Safety(2000)
 print 'Throttling up'
@@ -200,10 +166,6 @@ if not Script.SendRC(3, thr_in, True):
 start_alt = cs.alt
 while rel_alt < unlinking_alt:
 	print 'Relative altitude: %f' % rel_alt
-	#with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
-	#	data = '%.4f' % cs.lat + ' ' + '%.4f' % cs.lng + ' ' + '%.4f' % cs.alt + ' ' + '%.4f' % cs.press_abs 
-	#	file.write(u"%s\n" % data)
-	#	file.close()
 	Check_Status(rel_alt, kill, start_alt)
 	rel_alt = cs.alt - start_alt
 
@@ -212,13 +174,6 @@ if not Script.SendRC(3,1522,True):
 	print 'HOVER FAILED'
 	kill = 1
 	Safety_Check(kill)
-
-# hover_start = cs.timeInAir
-# print 'Hovering for 3 seconds'
-# print 'hover start =' % hover_start
-# while (cs.timeInAir - hover_start) < 3:
-# 	Check_Status(rel_alt, kill, start_alt)
-# 	print cs.timeInAir
 
 print 'Hovering for 3 seconds'
 Looping_Safety(3000)
@@ -229,27 +184,22 @@ Script.SendRC(8, rc8_max, True) # Tells pi to switch quads to althold
 # Looping_Safety(2000)
 
 # Disengage EPM
-print 'Unlinking'
+print 'UNLINKING'
 MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, rc9_min, 0, 0, 0, 0, 0)
-# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, rc10_min, 0, 0, 0, 0, 0)
 print 'Unlinked'
 print 'Hold for 2 seconds'
-#with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
-#	data = '%.4f' % cs.lat + ' ' + '%.4f' % cs.lng + ' ' + '%.4f' % cs.alt + ' ' + '%.4f' % cs.press_abs 
-#	file.write(u"%s\n" % data)
-#	file.close()
+
 Looping_Safety(2000)
 # Return to neutral
 MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 9, 1500, 0, 0, 0, 0, 0)
-# MAV.doCommand(MAVLink.MAV_CMD.DO_SET_SERVO, 10, 1500, 0, 0, 0, 0, 0)
 print 'EPM switch returned to neutral'
-
+Looping_Safety(1000)
 # ---------------------- CLOCKWISE TURN ---------------------- #
 Check_Status(rel_alt, kill, start_alt)
 init_yaw = cs.yaw 
 delta_yaw = 0
 yaw_in_neut = cs.ch4in
-print 'Initiating 60 degree CW turn'
+print 'TURNING'
 print 'In %d' % cs.ch3in
 print 'Out %d' % cs.ch3out
 print 'Mode = %s' % cs.mode
@@ -260,33 +210,26 @@ while delta_yaw < 30:
 	print 'Delta Yaw = %f degrees' % delta_yaw
 	Script.SendRC(4, yaw_in_neut + 100,True)
 	Check_Status(rel_alt, kill, start_alt)
-	#with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
-	#	data = '%.4f' % cs.lat + ' ' + '%.4f' % cs.lng + ' ' + '%.4f' % cs.alt + ' ' + '%.4f' % cs.press_abs 
-	#	file.write(u"%s\n" % data)
-	#	file.close()
 print 'Slowing turn rate by 50%'
+
 while delta_yaw < 60:
 	Safety_Check(kill)
 	delta_yaw = (180/math.pi)* math.asin(math.sin((cs.yaw - init_yaw)*(math.pi/180)))
 	print 'Delta Yaw = %f degrees' % delta_yaw
 	Script.SendRC(4, yaw_in_neut + 50,True)
 	Check_Status(rel_alt, kill, start_alt)
-	#with io.open( 'pressureReadings%s.txt' % f, 'w' ) as file:
-	#	data = '%.4f' % cs.lat + ' ' + '%.4f' % cs.lng + ' ' + '%.4f' % cs.alt + ' ' + '%.4f' % cs.press_abs 
-	#	file.write(u"%s\n" % data)
-	#	file.close()
 print 'Turn complete'
 # ------------------------- LANDING --------------------------- #
-# print 'Switching to Land mode'
-# print 'Sending Pi command for Land mode'
-# rc12_max = Script.GetParam('RC12_MAX') # Tells pi to switch HEX
-# if not Script.SendRC(12, rc12_max, True):
-# 	print 'Not in land mode'
-# 	if not Script.ChangeMode("Land"):
-# 		print 'Failed to enter landing mode, returning user control'
-# 		kill = True
-# 		Safety_Check(kill)
-Script.SendRC(3, 1100, True)
+print 'Switching to Land mode'
+print 'Sending Pi command for Land mode'
+rc12_max = Script.GetParam('RC12_MAX') # Tells pi to switch HEX
+if not Script.SendRC(12, rc12_max, True):
+	print 'Not in land mode'
+	if not Script.ChangeMode("Land"):
+		print 'Failed to enter landing mode, returning user control'
+		kill = True
+		Safety_Check(kill)
+# Script.SendRC(3, 1100, True)
 
 Looping_Safety(1000)
 final_mode = cs.mode

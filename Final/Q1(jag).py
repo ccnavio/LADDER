@@ -4,12 +4,13 @@
 # NEEDS TO BE TESTED ON THE COPTER
 # PID NEEDS TO BE ADJUSTED
 
-# USER DEFINED FUNCTIONS
 import sys, clr
 clr.AddReference("MissionPlanner")
 clr.AddReference("MAVLink")
 import MAVLink, math, time, MissionPlanner
 
+# This function will return all control back to the safety
+# pilot if radiso channel 7 is flipped over a certain value
 def Safety_Check(kill):
 	if (cs.ch7in > 1800) or kill:
 		for chan in range(1,5):
@@ -25,6 +26,9 @@ def Safety_Check(kill):
 	else:
 		return 0
 
+# This function replaces the Script.Sleep function. It allows
+# the safety pilot to regain control if while the copter is waiting
+# for x amount of time and something happens during testing.
 def Looping_Safety(time):
 	loop_var = 0
 	while loop_var < time/25:
@@ -32,6 +36,10 @@ def Looping_Safety(time):
 		loop_var = loop_var + 1
 		Script.Sleep(25)
 
+# This function initializes all necessary RC channels. 1-5 are over-written
+# by the script while channel 6-9 is not. What ever channel is the safety
+# switch cannot have the PWM value over 0, or else you will not regain 
+# control of the copter even if you flip the switch.
 def Initialize():
 	print 'Initializing RC channels'
 	for chan in range(1,5):
@@ -44,33 +52,37 @@ def Initialize():
 		if not Script.SendRC(chan,0,False):
 			print 'Could NOT set channel: %d to zero' % chan
 
+# This function checks certain parameters in which we see is the safest
+# environment for our copters to fly in. The values may change depending
+# on which copter/axis of control you are assigned to. If any of the
+# values exceed the safety, the safety pilot will automatically regain control
+# of its copter. 
 def Check_Status(rel_alt, kill, start_alt):
 	Safety_Check(kill)
 	if cs.climbrate > .75:
 		print 'Exceeded max climbrate. Climbrate = %f m/s.' % cs.climbrate
-		kill = True
-		Safety_Check(kill)
+		Safety_Check(True)
 
 	elif abs(cs.roll) > 15:
 		print 'Exceeded max roll. Roll = %f degrees.' % cs.roll
-		kill = True
-		Safety_Check(kill)
+		Safety_Check(True)
 
 	elif abs(cs.pitch) > 15:
 		print 'Exceeded max pitch. Pitch = %f degrees.' % cs.pitch
-		kill = True
-		Safety_Check(kill)
+		Safety_Check(True)
 
 	elif rel_alt > 2.5:
 		print 'Exceeded relative altitude of 2m. Rel_alt = %f m.' % rel_alt
-		kill = True
-		Safety_Check(kill)
+		Safety_Check(True)
 
 	else:
 		kill = False
 		return 0
 
-
+# This function occurs right after the signal from the pi has been sent to
+# change the mode in which the two quadcopters are in. This will exit the PID
+# loop but we need to ensure that the mode was correctly changed since we 
+# might have issues with commands sending but not getting received. 
 def Mode_Check(thr_in, kill):
 	if cs.mode == 'AltHold':
 		Safety_Check(kill)
@@ -101,7 +113,6 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt, thr_in):
 	Ki = 2  # Integral
 	Kd = 2  # Derivative
 
-	# may want to reset rel_alt before this loop to comp. for barometer fluct.
 	while cs.mode == 'Stabilize':
 		Check_Status(rel_alt, kill, start_alt)
 		rel_alt = cs.alt - start_alt
@@ -116,12 +127,12 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt, thr_in):
 		print 'Relative altitude %f' % rel_alt
 		Check_Status(rel_alt, kill, start_alt)
 
-		if abs(error) >= 45:
+		if abs(error) >= 60:
 			print 'Exceeded 45 degrees yaw'
 			kill = True
 			Safety_Check(kill)
 
-		elif abs(error) > 2:
+		elif abs(error) > 1:
 			accum_error += error * delta_time
 			der_error = (error - last_error)/delta_time
 			output = (error * Kp) + (accum_error * Ki) + (der_error * Kd)
@@ -132,7 +143,7 @@ def Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt, thr_in):
 		Check_Status(rel_alt, kill, start_alt)
 
 		if pitch_pwm > rc_2_max:
-			pitch_pwm = rc_2_max - 200
+			pitch_pwm = rc_2_max - 50
 		elif pitch_pwm < rc_2_min:
 			pitch_pwm = rc_2_min + 10
 
@@ -161,9 +172,7 @@ def Manual_Arm():
 			print 'Yaw not aligned, please wait'
 
 # ************************ MAIN PROGRAM *********************** #
-# pitch_pwm = cs.ch2in
-pitch_pwm = 1585 # ONLY FOR TESTING INDOORS
-
+pitch_pwm = cs.ch2in
 start_alt = cs.alt
 init_yaw = cs.yaw
 kill = False
@@ -187,7 +196,7 @@ if not Script.ChangeParam("LAND_SPEED", 30):
 
 # ONLY CHANGE THESE VARIABLES --------------------------------- #
 
-thr_in = 1605
+thr_in = 1615
 unlinking_alt = 1.5 # BE SURE TO CHANGE ON ALL 3 VEHICLES
 
 # ------------------------------------------------------------- #
@@ -197,16 +206,16 @@ if cs.mode != 'Stabilize':
 	print 'Incorrect flight mode. Switch to Stabilize.'
 	kill = 1
 
-# print 'Arming'
-# if MAV.doARM(True):
-# 	print 'Armed'
-# 	Check_Status(rel_alt, kill, start_alt)
-# 	Safety_Check(kill)
-# elif cs.armed == True:
-# 	print 'Already Armed'
-# elif cs.armed == False:
-# 	print 'Attempting to manually arm'
-# 	Manual_Arm()
+print 'Arming'
+if MAV.doARM(True):
+	print 'Armed'
+	Check_Status(rel_alt, kill, start_alt)
+	Safety_Check(kill)
+elif cs.armed == True:
+	print 'Already Armed'
+elif cs.armed == False:
+	print 'Attempting to manually arm'
+	Manual_Arm()
 
 # ------------------------- TAKEOFF --------------------------- #
 Check_Status(rel_alt, kill, start_alt)
@@ -223,7 +232,7 @@ if not Script.SendRC(3, thr_in, True):
 
 #Preventing error buildup in the PID tuner
 rel_alt = cs.alt - start_alt
-while rel_alt < 0.2 and cs.climbrate < 0.15: #Learn how to change variable names in a while loop
+while rel_alt < 0.2 and cs.climbrate < 0.15:
 	print 'bloop'
 	rel_alt = cs.alt - start_alt
 	Looping_Safety(100)
@@ -234,13 +243,11 @@ while rel_alt < 0.2 and cs.climbrate < 0.15: #Learn how to change variable names
 Control_Yaw(init_yaw, pitch_pwm, start_alt, unlinking_alt, rel_alt, thr_in)
 Mode_Check(thr_in, kill)
 
-#Should be unlinked
-
 #Rolling To The Right After Unlinking
 if cs.mode == 'AltHold':
     Script.SendRC(1,1249,True)
 
-    while cs.groundspeed < 0.20:
+    while cs.groundspeed < 0.4:
         Safety_Check(kill)
         print 'Vehicle rolling left'
         print 'GroundSpeed is %f' % cs.groundspeed
@@ -248,20 +255,15 @@ if cs.mode == 'AltHold':
     Script.SendRC(1,1504,True)
     print 'Finished rolling, proceeding to land'
 
-    Looping_Safety(1000)
-
-    if cs.groundspeed >= 0.5:
-        kill = True
-        Safety_Check(kill)
-
-# ------------------------- LANDING --------------------------- #
 print 'Landing in 7 seconds'
 Looping_Safety(7000)
 print 'Finished Looping safety'
+
+# ------------------------- LANDING --------------------------- #
+
 if not Script.ChangeMode("Land"):
 	print 'Failed to enter landing mode, returning user control'
-	kill = True
-	Safety_Check(kill)
+	Safety_Check(True)
 
 final_mode = cs.mode
 if final_mode != 'Land':
@@ -277,7 +279,6 @@ for chan in range(1,9):
 	if not Script.SendRC(chan,0,True):
 		print 'Could not set channel: %d to zero' % chan
 
-# Double check this functionality
 if MAV.doARM(False):
 	print 'Disarmed'
 else:
